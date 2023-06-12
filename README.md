@@ -45,12 +45,12 @@ Do not forget these cookies are temporary, so you need to renew them continuousl
 
 1. Open [emailnator](https://emailnator.com/) website. Click F12 or Ctrl + Shift + I to open inspector. Check "Preserve log" button, go to the "Network" tab in the inspector, click the "Go !" button in the website, right click the "message-list" in the Network Tab and hover on "Copy" and click to "Copy as cURL (bash)". Now go to the [curlconverter](https://curlconverter.com/python/), paste your code here. The header and cookies dictionary will appear, copy them and use in your codes.
 
-<img src="emailnator.jpg">
+<img src="images/emailnator.jpg">
 
 
 2. Open [Perplexity.ai](https://perplexity.ai/) website. Sign out if you're signed in. Click F12 or Ctrl + Shift + I to open inspector. Check "Preserve log" button, go to the "Network" tab in the inspector, click the "Sign Up" button in the website, write a random email and click "Continue with Email" button, right click the "email" in the Network Tab and hover on "Copy" and click to "Copy as cURL (bash)". Now go to the [curlconverter](https://curlconverter.com/python/), paste your code here. The header and cookies dictionary will appear, copy them and use in your codes.
 
-<img src="perplexity1.jpg">
-<img src="perplexity2.jpg">
+<img src="images/perplexity1.jpg">
+<img src="images/perplexity2.jpg">
 
 3. Don't confuse the headers and cookies for [emailnator](https://emailnator.com/) and [Perplexity.ai](https://perplexity.ai/), look at [How To Use](#how-to-use) to learn how to use them.
