@@ -54,3 +54,7 @@ Do not forget these cookies are temporary, so you need to renew them continuousl
 <img src="images/perplexity2.jpg">
 
 3. Don't confuse the headers and cookies for [emailnator](https://emailnator.com/) and [Perplexity.ai](https://perplexity.ai/), look at [How To Use](#how-to-use) to learn how to use them.
+
+
+# Thanks To
+* [perplexityai](https://github.com/nathanrchn/perplexityai) repository by [nathanrchn](https://github.com/nathanrchn)
