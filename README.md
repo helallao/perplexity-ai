@@ -57,4 +57,4 @@ Do not forget these cookies are temporary, so you need to renew them continuousl
 
 
 # Thanks To
-* [perplexityai](https://github.com/nathanrchn/perplexityai) repository by [nathanrchn](https://github.com/nathanrchn)
+* [perplexityai](https://github.com/nathanrchn/perplexityai) by [nathanrchn](https://github.com/nathanrchn)
