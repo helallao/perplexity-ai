@@ -87,7 +87,7 @@ class Client:
         time.sleep(1)
 
     def create_account(self, headers, cookies):
-        emailnator_cli = Emailnator(headers, cookies)
+        emailnator_cli = Emailnator(headers, cookies, dot=False, google_mail=True)
         resp = self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
             'email': emailnator_cli.email,
             'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
