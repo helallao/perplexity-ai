@@ -2,7 +2,7 @@
 This module is simply just an API Wrapper and account generator. So it's an API Wrapper with free copilots.
 
 # How It Works
-This module uses [emailnator](https://emailnator.com/) to generate new accounts. As you know, when you create a new account, you will have 5 copilots. That's how it works! This module will generate you new gmails with [emailnator](https://emailnator.com/) and you will have **UNLIMITED COPILOTS!**
+This module uses [emailnator](https://emailnator.com/) to generate new accounts. As you know, when you create a new account, you will have 5 copilots. That's how it works! This module will generate you new gmails (**using @googlemail.com right now**) with [emailnator](https://emailnator.com/) and you will have **UNLIMITED COPILOTS!**
 
 # Requirements
 * [requests](https://pypi.org/project/requests/)
