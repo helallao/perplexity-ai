@@ -119,7 +119,7 @@ class Client:
 
     def search(self, query, mode='concise', focus='internet'):
         assert mode in ['concise', 'copilot'], 'Search modes --> ["concise", "copilot"]'
-        assert focus in ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia'], 'Invalid search focus'
+        assert focus in ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia'], 'Search focus modes --> ["internet", "scholar", "writing", "wolfram", "youtube", "reddit", "wikipedia"]'
         assert self.copilot > 0 if mode == 'copilot' else True, 'You have used all of your copilots'
 
         self.copilot = self.copilot - 1 if mode == 'copilot' else self.copilot
