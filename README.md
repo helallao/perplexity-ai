@@ -9,13 +9,16 @@ This module uses [emailnator](https://emailnator.com/) to generate new accounts.
 * [beautifulsoup4](https://pypi.org/project/beautifulsoup4/)
 * [lxml](https://pypi.org/project/lxml/) (Parser for BeautifulSoup)
 * [websocket-client](https://pypi.org/project/websocket-client/)
-* [uuid](https://pypi.org/project/uuid/)
 
 Install requirements with:
 ```sh
 pip3 install -r requirements.txt
 ```
 
+or with single-line command:
+```sh
+pip3 install requests&&pip3 install beautifulsoup4&&pip3 install lxml&&pip3 install websocket-client
+```
 
 # How To Use
 First thing first, [Perplexity.ai](https://perplexity.ai/) is protected by cloudflare, and [emailnator](https://emailnator.com/) too. We need to open this pages manually and get the cookies. And do not forget these cookies are temporary, so you need to renew them continuously. [Here](#how-to-get-the-cookies) how to get your cookies.
