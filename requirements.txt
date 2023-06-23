@@ -2,4 +2,3 @@ requests
 beautifulsoup4
 lxml
 websocket-client
-uuid
