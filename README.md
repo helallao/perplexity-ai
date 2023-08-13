@@ -38,8 +38,8 @@ perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates 
 
 # modes = ['concise', 'copilot']
 # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia']
-# file = (data, mimetype) perplexity supports two file types: txt and pdf. If you going to use txt, the mimetype must be "text/plane". If you going to use pdf, the mimetype must be "application/pdf"
-print(perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'text/plane')))
+# file = (data, filetype) perplexity supports two file types, txt and pdf
+print(perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt')))
 
 # perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function when you're out of copilots
 ```
