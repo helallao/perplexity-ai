@@ -17,7 +17,7 @@ pip3 install -r requirements.txt
 
 or with single-line command:
 ```sh
-pip3 install requests&&pip3 install beautifulsoup4&&pip3 install lxml&&pip3 install websocket-client
+pip3 install requests&&pip3 install beautifulsoup4&&pip3 install lxml&&pip3 install websocket-client&&pip3 install requests-toolbelt
 ```
 
 # How To Use
