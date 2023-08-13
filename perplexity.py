@@ -2,6 +2,7 @@ import json
 import time
 import requests
 import random
+from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 from bs4 import BeautifulSoup
 from websocket import WebSocketApp
 from uuid import uuid4
@@ -70,7 +71,9 @@ class Client:
         self.frontend_uuid = str(uuid4())
         self.frontend_session_id = str(uuid4())
         self._last_answer = None
+        self._last_file_upload_info = None
         self.copilot = 0
+        self.file_upload = 0
         self.n = 1
 
         assert self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
@@ -103,6 +106,7 @@ class Client:
             self.session.get('https://www.perplexity.ai/')
 
             self.copilot = 5
+            self.file_upload = 3
 
             return True
 
@@ -112,36 +116,89 @@ class Client:
         elif message == '3probe':
             ws.send('5')
 
+
         if message.startswith(str(430 + self.n)):
             response = json.loads(message[3:])[0]
-            response['text'] = json.loads(response['text'])
-            self._last_answer = response
 
-    def search(self, query, mode='concise', focus='internet'):
+            if 'text' in response:
+                response['text'] = json.loads(response['text'])
+                self._last_answer = response
+
+            else:
+                self._last_file_upload_info = response
+
+    def search(self, query, mode='concise', focus='internet', file=None):
         assert mode in ['concise', 'copilot'], 'Search modes --> ["concise", "copilot"]'
         assert focus in ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia'], 'Search focus modes --> ["internet", "scholar", "writing", "wolfram", "youtube", "reddit", "wikipedia"]'
         assert self.copilot > 0 if mode == 'copilot' else True, 'You have used all of your copilots'
+        assert self.file_upload > 0 if file else True, 'You have used all of your file uploads'
 
         self.copilot = self.copilot - 1 if mode == 'copilot' else self.copilot
+        self.file_upload = self.file_upload - 1 if file else self.file_upload
         self.n += 1
         self._last_answer = None
+        self._last_file_upload_info = None
 
-        self.ws.send(f'{420 + self.n}' + json.dumps([
-            'perplexity_ask',
-            query,
-            {
-                'source': 'default',
-                'mode': mode,
-                'last_backend_uuid': None,
-                'read_write_token': '',
-                'conversational_enabled': True,
-                'frontend_session_id': self.frontend_session_id,
-                'search_focus': focus,
-                'frontend_uuid': self.frontend_uuid,
-                'gpt4': False,
-                'language': 'en-US',
-            }
-        ]))
+        if file:
+            self.ws.send(f'{420 + self.n}' + json.dumps([
+                'get_upload_url',
+                {
+                    'content_type': file[1]
+                }
+            ]))
+
+            while not self._last_file_upload_info:
+                pass
+
+            if not self._last_file_upload_info['success']:
+                raise Exception('File upload error', self._last_file_upload_info)
+
+            monitor = MultipartEncoderMonitor(MultipartEncoder(fields={
+                **self._last_file_upload_info['fields'],
+                'file': ('myfile', file[0], file[1])
+                    }))
+
+            if not (upload_resp := requests.post(self._last_file_upload_info['url'], data=monitor, headers={'Content-Type': monitor.content_type})).ok:
+                raise Exception('File upload error', upload_resp)
+
+            uploaded_file = self._last_file_upload_info['url'] + self._last_file_upload_info['fields']['key'].replace('${filename}', 'myfile')
+
+
+            self.ws.send(f'{420 + self.n}' + json.dumps([
+                'perplexity_ask',
+                query,
+                {
+                    'attachments': [uploaded_file],
+                    'source': 'default',
+                    'mode': mode,
+                    'last_backend_uuid': None,
+                    'read_write_token': '',
+                    'conversational_enabled': True,
+                    'frontend_session_id': self.frontend_session_id,
+                    'search_focus': focus,
+                    'frontend_uuid': self.frontend_uuid,
+                    'gpt4': False,
+                    'language': 'en-US',
+                }
+            ]))
+
+        else:
+            self.ws.send(f'{420 + self.n}' + json.dumps([
+                'perplexity_ask',
+                query,
+                {
+                    'source': 'default',
+                    'mode': mode,
+                    'last_backend_uuid': None,
+                    'read_write_token': '',
+                    'conversational_enabled': True,
+                    'frontend_session_id': self.frontend_session_id,
+                    'search_focus': focus,
+                    'frontend_uuid': self.frontend_uuid,
+                    'gpt4': False,
+                    'language': 'en-US',
+                }
+            ]))
 
         while not self._last_answer:
             pass
