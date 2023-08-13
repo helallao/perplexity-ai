@@ -143,7 +143,7 @@ class Client:
             self.ws.send(f'{420 + self.n}' + json.dumps([
                 'get_upload_url',
                 {
-                    'content_type': file[1]
+                    'content_type': {'txt': 'text/plane', 'pdf': 'application/pdf'}[file[1]]
                 }
             ]))
 
@@ -155,7 +155,7 @@ class Client:
 
             monitor = MultipartEncoderMonitor(MultipartEncoder(fields={
                 **self._last_file_upload_info['fields'],
-                'file': ('myfile', file[0], file[1])
+                'file': ('myfile', file[0], {'txt': 'text/plane', 'pdf': 'application/pdf'}[file[1]])
                     }))
 
             if not (upload_resp := requests.post(self._last_file_upload_info['url'], data=monitor, headers={'Content-Type': monitor.content_type})).ok:
