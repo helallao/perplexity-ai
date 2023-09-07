@@ -14,7 +14,7 @@ def souper(x):
 
 
 class Emailnator:
-    def __init__(self, headers, cookies, domain=False, plus=True, dot=True, google_mail=False):
+    def __init__(self, headers, cookies, domain=False, plus=False, dot=True, google_mail=False):
         self.inbox = []
         self.inbox_ads = []
 
@@ -35,6 +35,7 @@ class Emailnator:
 
         response = self.s.post('https://www.emailnator.com/generate-email', json=data).json()
         self.email = response['email'][0]
+
 
         for ads in self.s.post('https://www.emailnator.com/message-list', json={'email': self.email}).json()['messageData']:
             self.inbox_ads.append(ads['messageID'])
@@ -57,6 +58,7 @@ class Emailnator:
 
     def open(self, msg_id):
         return self.s.post('https://www.emailnator.com/message-list', json={'email': self.email, 'messageID': msg_id}).text
+
 
 
 class Client:
@@ -91,6 +93,7 @@ class Client:
 
     def create_account(self, headers, cookies):
         emailnator_cli = Emailnator(headers, cookies, dot=False, google_mail=True)
+
         resp = self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
             'email': emailnator_cli.email,
             'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
@@ -107,6 +110,24 @@ class Client:
 
             self.copilot = 5
             self.file_upload = 3
+
+            self.ws.close()
+
+            self.t = format(random.getrandbits(32), '08x')
+            self.sid = json.loads(self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}').text[1:])['sid']
+
+            assert self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
+
+            self.ws = WebSocketApp(
+                url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
+                cookie='; '.join([f'{x}={y}' for x, y in self.session.cookies.get_dict().items()]),
+                on_open=lambda ws: ws.send('2probe'),
+                on_message=self.on_message,
+                on_error=lambda ws, err: print(f'Error: {err}'),
+            )
+
+            Thread(target=self.ws.run_forever).start()
+            time.sleep(1)
 
             return True
 
@@ -143,7 +164,9 @@ class Client:
             self.ws.send(f'{420 + self.n}' + json.dumps([
                 'get_upload_url',
                 {
-                    'content_type': {'txt': 'text/plane', 'pdf': 'application/pdf'}[file[1]]
+                    'version': '2.0',
+                    'source': 'default',
+                    'content_type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]
                 }
             ]))
 
@@ -155,7 +178,7 @@ class Client:
 
             monitor = MultipartEncoderMonitor(MultipartEncoder(fields={
                 **self._last_file_upload_info['fields'],
-                'file': ('myfile', file[0], {'txt': 'text/plane', 'pdf': 'application/pdf'}[file[1]])
+                'file': ('myfile', file[0], {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]])
                     }))
 
             if not (upload_resp := requests.post(self._last_file_upload_info['url'], data=monitor, headers={'Content-Type': monitor.content_type})).ok:
@@ -169,6 +192,7 @@ class Client:
                 query,
                 {
                     'attachments': [uploaded_file],
+                    'version': '2.0',
                     'source': 'default',
                     'mode': mode,
                     'last_backend_uuid': None,
@@ -187,6 +211,7 @@ class Client:
                 'perplexity_ask',
                 query,
                 {
+                    'version': '2.0',
                     'source': 'default',
                     'mode': mode,
                     'last_backend_uuid': None,
