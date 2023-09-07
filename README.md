@@ -6,9 +6,11 @@ This module uses [emailnator](https://emailnator.com/) to generate new accounts.
 
 # Requirements
 * [requests](https://pypi.org/project/requests/)
+* [requests-toolbelt](https://pypi.org/project/requests-toolbelt/)
 * [beautifulsoup4](https://pypi.org/project/beautifulsoup4/)
 * [lxml](https://pypi.org/project/lxml/) (Parser for BeautifulSoup)
 * [websocket-client](https://pypi.org/project/websocket-client/)
+
 
 Install requirements with:
 ```sh
