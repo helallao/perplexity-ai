@@ -83,6 +83,7 @@ class Client:
         self.ws = WebSocketApp(
             url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
             cookie='; '.join([f'{x}={y}' for x, y in self.session.cookies.get_dict().items()]),
+            header={'user-agent': self.session.headers['user-agent']},
             on_open=lambda ws: ws.send('2probe'),
             on_message=self.on_message,
             on_error=lambda ws, err: print(f'Error: {err}'),
@@ -121,6 +122,7 @@ class Client:
             self.ws = WebSocketApp(
                 url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
                 cookie='; '.join([f'{x}={y}' for x, y in self.session.cookies.get_dict().items()]),
+                header={'user-agent': self.session.headers['user-agent']},
                 on_open=lambda ws: ws.send('2probe'),
                 on_message=self.on_message,
                 on_error=lambda ws, err: print(f'Error: {err}'),
