@@ -10,6 +10,7 @@ This module uses [emailnator](https://emailnator.com/) to generate new accounts.
 * [beautifulsoup4](https://pypi.org/project/beautifulsoup4/)
 * [lxml](https://pypi.org/project/lxml/) (Parser for BeautifulSoup)
 * [websocket-client](https://pypi.org/project/websocket-client/)
+* [aiohttp](https://pypi.org/project/aiohttp/) (if you are going to use asynchronous version)
 
 
 Install requirements with:
@@ -20,6 +21,12 @@ pip3 install -r requirements.txt
 or with single-line command:
 ```sh
 pip3 install requests&&pip3 install beautifulsoup4&&pip3 install lxml&&pip3 install websocket-client&&pip3 install requests-toolbelt
+```
+
+and aiohttp if you are going to use asynchronous version:
+
+```sh
+pip3 install aiohttp
 ```
 
 # How To Use
@@ -44,6 +51,32 @@ perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates 
 print(perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt')))
 
 # perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function when you're out of copilots
+```
+
+# How To Use Asynchronous Version
+```python3
+import perplexity_async
+import asyncio
+
+perplexity_headers = <your headers here>
+perplexity_cookies = <your cookies here>
+
+emailnator_headers = <your headers here>
+emailnator_cookies = <your cookies here>
+
+
+async def test():
+    perplexity_cli = await perplexity_async.Client(perplexity_headers, perplexity_cookies)
+    await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 copilots will be renewed. You can pass this one if you are not going to use "copilot" mode
+
+    # modes = ['concise', 'copilot']
+    # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia']
+    # file = (data, filetype) perplexity supports two file types, txt and pdf
+    print(await perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt')))
+
+    # await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function when you're out of copilots
+
+asyncio.run(test())
 ```
 
 # How To Get The Cookies
