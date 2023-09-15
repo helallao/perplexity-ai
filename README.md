@@ -45,10 +45,26 @@ emailnator_cookies = <your cookies here>
 perplexity_cli = perplexity.Client(perplexity_headers, perplexity_cookies)
 perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 copilots will be renewed. You can pass this one if you are not going to use "copilot" mode
 
+
+# takes a string as query, and returns a string as answer.
+def my_text_prompt_solver(query):
+    return input(f'{query}: ')
+
+# takes a string as description and a dictionary as options. Dictionary consists of ids and values. Example: {1: "Orange", 2: "Banana"}
+# returns a list of integers which are ids of selected options. Let's say you selected "Banana", function should return [2]
+def my_checkbox_prompt_solver(description, options):
+    print(description + '\n' + '\n'.join([str(x) + ' - ' + options[x] for x in options]))
+    return [int(input('--> '))]
+
+
 # modes = ['concise', 'copilot']
 # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia']
 # file = (data, filetype) perplexity supports two file types, txt and pdf
-print(perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt')))
+# solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
+print(perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt'), solvers={
+    'text': my_text_prompt_solver,
+    'checkbox': my_checkbox_prompt_solver
+    }))
 
 # perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function when you're out of copilots
 ```
@@ -65,6 +81,17 @@ emailnator_headers = <your headers here>
 emailnator_cookies = <your cookies here>
 
 
+# takes a string as query, and returns a string as answer.
+async def my_text_prompt_solver(query):
+    return input(f'{query}: ')
+
+# takes a string as description and a dictionary as options. Dictionary consists of ids and values. Example: {1: "Orange", 2: "Banana"}
+# returns a list of integers which are ids of selected options. Let's say you selected "Banana", function should return [2]
+async def my_checkbox_prompt_solver(description, options):
+    print(description + '\n' + '\n'.join([str(x) + ' - ' + options[x] for x in options]))
+    return [int(input('--> '))]
+
+
 async def test():
     perplexity_cli = await perplexity_async.Client(perplexity_headers, perplexity_cookies)
     await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 copilots will be renewed. You can pass this one if you are not going to use "copilot" mode
@@ -72,7 +99,11 @@ async def test():
     # modes = ['concise', 'copilot']
     # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia']
     # file = (data, filetype) perplexity supports two file types, txt and pdf
-    print(await perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt')))
+    # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
+    print(await perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt'), solvers={
+        'text': my_text_prompt_solver,
+        'checkbox': my_checkbox_prompt_solver
+    }))
 
     # await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function when you're out of copilots
 
@@ -82,12 +113,12 @@ asyncio.run(test())
 # How To Get The Cookies
 Do not forget these cookies are temporary, so you need to renew them continuously.
 
-1. Open [emailnator](https://emailnator.com/) website. Click F12 or Ctrl + Shift + I to open inspector. Check "Preserve log" button, go to the "Network" tab in the inspector, click the "Go !" button in the website, right click the "message-list" in the Network Tab and hover on "Copy" and click to "Copy as cURL (bash)". Now go to the [curlconverter](https://curlconverter.com/python/), paste your code here. The header and cookies dictionary will appear, copy them and use in your codes.
+1. Open [emailnator](https://emailnator.com/) website. Click F12 or Ctrl+Shift+I to open inspector. Go to the "Network" tab in the inspector, check "Preserve log" button, click the "Go !" button in the website, right click the "message-list" in the Network Tab and hover on "Copy" and click to "Copy as cURL (bash)". Now go to the [curlconverter](https://curlconverter.com/python/), paste your code here. The header and cookies dictionary will appear, copy them and use in your codes.
 
 <img src="images/emailnator.jpg">
 
 
-2. Open [Perplexity.ai](https://perplexity.ai/) website. Sign out if you're signed in. Click F12 or Ctrl + Shift + I to open inspector. Check "Preserve log" button, go to the "Network" tab in the inspector, click the "Sign Up" button in the website, write a random email and click "Continue with Email" button, right click the "email" in the Network Tab and hover on "Copy" and click to "Copy as cURL (bash)". Now go to the [curlconverter](https://curlconverter.com/python/), paste your code here. The header and cookies dictionary will appear, copy them and use in your codes.
+2. Open [Perplexity.ai](https://perplexity.ai/) website. Sign out if you're signed in. Click F12 or Ctrl+Shift+I to open inspector. Go to the "Network" tab in the inspector, check "Preserve log" button, click the "Sign Up" button in the website, enter a random email and click "Continue with Email" button, right click the "email" in the Network Tab and hover on "Copy" and click to "Copy as cURL (bash)". Now go to the [curlconverter](https://curlconverter.com/python/), paste your code here. The header and cookies dictionary will appear, copy them and use in your codes.
 
 <img src="images/perplexity1.jpg">
 <img src="images/perplexity2.jpg">
@@ -97,3 +128,4 @@ Do not forget these cookies are temporary, so you need to renew them continuousl
 
 # Thanks To
 * [perplexityai](https://github.com/nathanrchn/perplexityai) by [nathanrchn](https://github.com/nathanrchn)
+* [dominicOT](https://github.com/dominicOT) for his contributions
