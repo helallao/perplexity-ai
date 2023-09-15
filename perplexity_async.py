@@ -7,10 +7,11 @@ from websocket import WebSocketApp
 from uuid import uuid4
 from threading import Thread
 
-
+# utility function for parsing HTML content - using BeautifulSoup, lxml parser
 def souper(x):
     return BeautifulSoup(x, 'lxml')
 
+# utility function for converting aiohttp cookie_jar to dict
 def cookiejar_to_dict(cookie_jar):
     new = {}
 
@@ -21,7 +22,8 @@ def cookiejar_to_dict(cookie_jar):
     return new
 
 
-
+# https://dev.to/akarshan/asynchronous-python-magic-how-to-create-awaitable-constructors-with-asyncmixin-18j5
+# https://web.archive.org/web/20230915163459/https://dev.to/akarshan/asynchronous-python-magic-how-to-create-awaitable-constructors-with-asyncmixin-18j5
 class AsyncMixin:
     def __init__(self, *args, **kwargs):
         self.__storedargs = args, kwargs
@@ -41,15 +43,18 @@ class AsyncMixin:
         return self.__initobj().__await__()
 
 
+# client class for emailnator
 class Emailnator(AsyncMixin):
     async def __ainit__(self, headers, cookies, domain=False, plus=False, dot=True, google_mail=False):
+        # inbox_ads for exclude the advertisements when you create a new mail
         self.inbox = []
         self.inbox_ads = []
 
+        # create session with provided headers & cookies
         self.s = aiohttp.ClientSession(headers=headers, cookies=cookies)
 
+        # preparing data for email generation
         data = {'email': []}
-
         if domain:
             data['email'].append('domain')
         if plus:
@@ -59,13 +64,14 @@ class Emailnator(AsyncMixin):
         if google_mail:
             data['email'].append('googleMail')
 
-        response = await (await self.s.post('https://www.emailnator.com/generate-email', json=data)).json()
-        self.email = response['email'][0]
+        # generate temporary email address
+        self.email = (await (await self.s.post('https://www.emailnator.com/generate-email', json=data)).json())['email'][0]
 
-
+        # append advertisements to inbox_ads
         for ads in (await (await self.s.post('https://www.emailnator.com/message-list', json={'email': self.email})).json())['messageData']:
             self.inbox_ads.append(ads['messageID'])
 
+    # reload inbox messages
     async def reload(self, wait=False, retry_timeout=5):
         self.new_msgs = []
 
@@ -82,17 +88,19 @@ class Emailnator(AsyncMixin):
         self.inbox += self.new_msgs
         return self.new_msgs
 
+    # open selected inbox message
     async def open(self, msg_id):
         return (await (await self.s.post('https://www.emailnator.com/message-list', json={'email': self.email, 'messageID': msg_id})).text())
 
 
-
+# client class for interactions with perplexity ai webpage
 class Client(AsyncMixin):
     async def __ainit__(self, headers, cookies):
         self.session = aiohttp.ClientSession(headers=headers, cookies=cookies)
 
         await self.session.get(f'https://www.perplexity.ai/search/{str(uuid4())}')
 
+        # generate random values for session init
         self.t = format(random.getrandbits(32), '08x')
         self.sid = json.loads((await (await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}')).text())[1:])['sid']
         self.frontend_uuid = str(uuid4())
@@ -105,6 +113,7 @@ class Client(AsyncMixin):
 
         assert (await (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text()) == 'OK'
 
+        # setup websocket communication
         self.ws = WebSocketApp(
             url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
             cookie='; '.join([f'{x}={y}' for x, y in cookiejar_to_dict(self.session.cookie_jar).items()]),
@@ -114,12 +123,15 @@ class Client(AsyncMixin):
             on_error=lambda ws, err: print(f'Error: {err}'),
         )
 
+        # start webSocket thread
         Thread(target=self.ws.run_forever).start()
         await asyncio.sleep(1)
 
+    # method to create an account on the webpage
     async def create_account(self, headers, cookies):
         emailnator_cli = await Emailnator(headers, cookies, dot=False, google_mail=True)
 
+        # send sign in link to email
         resp = await self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
             'email': emailnator_cli.email,
             'csrfToken': cookiejar_to_dict(self.session.cookie_jar)['next-auth.csrf-token'].split('%')[0],
@@ -128,6 +140,7 @@ class Client(AsyncMixin):
         })
 
         if resp.ok:
+            # get the link from mail and open, you will be signed in directly when you open link
             new_msgs = await emailnator_cli.reload(wait=True)
             new_account_link = souper(await emailnator_cli.open(new_msgs[0]['messageID'])).select('a')[1].get('href')
             await emailnator_cli.s.close()
@@ -140,12 +153,13 @@ class Client(AsyncMixin):
 
             self.ws.close()
 
+            # generate random values for session init
             self.t = format(random.getrandbits(32), '08x')
             self.sid = json.loads((await (await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}')).text())[1:])['sid']
 
-
             assert (await (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text()) == 'OK'
 
+            # reconfig - WebSocket communication
             self.ws = WebSocketApp(
                 url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
                 cookie='; '.join([f'{x}={y}' for x, y in cookiejar_to_dict(self.session.cookie_jar).items()]),
@@ -155,11 +169,13 @@ class Client(AsyncMixin):
                 on_error=lambda ws, err: print(f'Error: {err}'),
             )
 
+            # start WebSocket thread
             Thread(target=self.ws.run_forever).start()
             await asyncio.sleep(1)
 
             return True
 
+    # message handler function for Websocket
     def on_message(self, ws, message):
         if message == '2':
             ws.send('3')
@@ -177,7 +193,8 @@ class Client(AsyncMixin):
             else:
                 self._last_file_upload_info = response
 
-    async def search(self, query, mode='concise', focus='internet', file=None):
+    # method to search on the webpage
+    async def search(self, query, mode='concise', focus='internet', file=None, solvers={}):
         assert mode in ['concise', 'copilot'], 'Search modes --> ["concise", "copilot"]'
         assert focus in ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia'], 'Search focus modes --> ["internet", "scholar", "writing", "wolfram", "youtube", "reddit", "wikipedia"]'
         assert self.copilot > 0 if mode == 'copilot' else True, 'You have used all of your copilots'
@@ -189,78 +206,222 @@ class Client(AsyncMixin):
         self._last_answer = None
         self._last_file_upload_info = None
 
-        if file:
+
+        if mode == 'concise':
+            if file:
+                raise Exception('File upload cannot be used in concise mode')
+
             self.ws.send(f'{420 + self.n}' + json.dumps([
-                'get_upload_url',
+                'perplexity_ask',
+                query,
                 {
-                    'version': '2.0',
+                    'version': '2.1',
                     'source': 'default',
-                    'content_type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]
+                    'mode': mode,
+                    'last_backend_uuid': None,
+                    'read_write_token': '',
+                    'conversational_enabled': True,
+                    'frontend_session_id': self.frontend_session_id,
+                    'search_focus': focus,
+                    'frontend_uuid': self.frontend_uuid,
+                    'gpt4': False,
+                    'language': 'en-US',
                 }
             ]))
 
-            while not self._last_file_upload_info:
+            # wait for response and return
+            while not self._last_answer:
                 pass
 
-            if not self._last_file_upload_info['success']:
-                raise Exception('File upload error', self._last_file_upload_info)
+            return self._last_answer
 
 
-            with aiohttp.MultipartWriter("form-data") as mp:
-                for field_name, field_value in self._last_file_upload_info['fields'].items():
-                    part = mp.append(field_value)
-                    part.set_content_disposition('form-data', name=field_name)
+        if mode == 'copilot':
+            if file:
+                # request an upload URL for a file
+                self.ws.send(f'{420 + self.n}' + json.dumps([
+                    'get_upload_url',
+                    {
+                        'version': '2.1',
+                        'source': 'default',
+                        'content_type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]
+                    }
+                ]))
 
-                part = mp.append(file[0], {'Content-Type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]})
-                part.set_content_disposition('form-data', name='file', filename='myfile')
+                # wait for response
+                while not self._last_file_upload_info:
+                    pass
 
-                upload_resp = await self.session.post(self._last_file_upload_info['url'], data=mp, headers={'Content-Type': mp.content_type})
+                if not self._last_file_upload_info['success']:
+                    raise Exception('File upload error', self._last_file_upload_info)
 
-            if not upload_resp.ok:
-                raise Exception('File upload error', upload_resp)
+                # aiohttp's own multipart encoder
+                with aiohttp.MultipartWriter("form-data") as mp:
+                    for field_name, field_value in self._last_file_upload_info['fields'].items():
+                        part = mp.append(field_value)
+                        part.set_content_disposition('form-data', name=field_name)
 
-            uploaded_file = self._last_file_upload_info['url'] + self._last_file_upload_info['fields']['key'].replace('${filename}', 'myfile')
+                    part = mp.append(file[0], {'Content-Type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]})
+                    part.set_content_disposition('form-data', name='file', filename='myfile')
+
+                    upload_resp = await self.session.post(self._last_file_upload_info['url'], data=mp, headers={'Content-Type': mp.content_type})
+
+                if not upload_resp.ok:
+                    raise Exception('File upload error', upload_resp)
+
+                uploaded_file = self._last_file_upload_info['url'] + self._last_file_upload_info['fields']['key'].replace('${filename}', 'myfile')
+
+                # send search request with uploaded file as an attachment
+                self.ws.send(f'{420 + self.n}' + json.dumps([
+                    'perplexity_ask',
+                    query,
+                    {
+                        'attachments': [uploaded_file],
+                        'version': '2.1',
+                        'source': 'default',
+                        'mode': mode,
+                        'last_backend_uuid': None,
+                        'read_write_token': '',
+                        'conversational_enabled': True,
+                        'frontend_session_id': self.frontend_session_id,
+                        'search_focus': focus,
+                        'frontend_uuid': self.frontend_uuid,
+                        'gpt4': False,
+                        'language': 'en-US',
+                    }
+                ]))
+
+            # send search request without file
+            else:
+                self.ws.send(f'{420 + self.n}' + json.dumps([
+                    'perplexity_ask',
+                    query,
+                    {
+                        'version': '2.1',
+                        'source': 'default',
+                        'mode': mode,
+                        'last_backend_uuid': None,
+                        'read_write_token': '',
+                        'conversational_enabled': True,
+                        'frontend_session_id': self.frontend_session_id,
+                        'search_focus': focus,
+                        'frontend_uuid': self.frontend_uuid,
+                        'gpt4': False,
+                        'language': 'en-US',
+                    }
+                ]))
 
 
-            self.ws.send(f'{420 + self.n}' + json.dumps([
-                'perplexity_ask',
-                query,
-                {
-                    'attachments': [uploaded_file],
-                    'version': '2.0',
-                    'source': 'default',
-                    'mode': mode,
-                    'last_backend_uuid': None,
-                    'read_write_token': '',
-                    'conversational_enabled': True,
-                    'frontend_session_id': self.frontend_session_id,
-                    'search_focus': focus,
-                    'frontend_uuid': self.frontend_uuid,
-                    'gpt4': False,
-                    'language': 'en-US',
-                }
-            ]))
+            # we will enter a loop here, ai will ask questions and prompt solvers will answer
+            while True:
+                while not self._last_answer:
+                    pass
 
-        else:
-            self.ws.send(f'{420 + self.n}' + json.dumps([
-                'perplexity_ask',
-                query,
-                {
-                    'version': '2.0',
-                    'source': 'default',
-                    'mode': mode,
-                    'last_backend_uuid': None,
-                    'read_write_token': '',
-                    'conversational_enabled': True,
-                    'frontend_session_id': self.frontend_session_id,
-                    'search_focus': focus,
-                    'frontend_uuid': self.frontend_uuid,
-                    'gpt4': False,
-                    'language': 'en-US',
-                }
-            ]))
+                # if ai finished asking questions, return answer
+                if self._last_answer['step_type'] == 'FINAL':
+                    return self._last_answer
 
-        while not self._last_answer:
-            pass
+                # if ai asking a question, use prompt solvers to answer
+                elif self._last_answer['step_type'] == 'PROMPT_INPUT':
+                    self.backend_uuid = self._last_answer['backend_uuid']
 
-        return self._last_answer
+                    for step_query in self._last_answer['text'][-1]['content']['inputs']:
+                        if step_query['type'] == 'PROMPT_TEXT':
+                            solver = solvers.get('text', None)
+
+                            # use solver to answer if solver function is defined
+                            if solver:
+                                self.ws.send(f'{420 + self.n}' + json.dumps([
+                                    'perplexity_step',
+                                    query,
+                                    {
+                                        'version': '2.1',
+                                        'source': 'default',
+                                        'attachments': None,
+                                        'last_backend_uuid': self.backend_uuid,
+                                        'existing_entry_uuid': self.backend_uuid,
+                                        'read_write_token': '',
+                                        'search_focus': focus,
+                                        'frontend_uuid': self.frontend_uuid,
+                                        'step_payload': {
+                                            'uuid': str(uuid4()),
+                                            'step_type': 'USER_INPUT',
+                                            'content': [{'content': {'text': (await solver(step_query['content']['description']))[:2000]}, 'type': 'USER_TEXT', 'uuid': step_query['uuid']}]
+                                        }
+                                    }
+                                ]))
+
+                            # skip the question if solver function is not defined
+                            else:
+                                self.ws.send(f'{420 + self.n}' + json.dumps([
+                                    'perplexity_step',
+                                    query,
+                                    {
+                                        'version': '2.1',
+                                        'source': 'default',
+                                        'attachments': None,
+                                        'last_backend_uuid': self.backend_uuid,
+                                        'existing_entry_uuid': self.backend_uuid,
+                                        'read_write_token': '',
+                                        'search_focus': focus,
+                                        'frontend_uuid': self.frontend_uuid,
+                                        'step_payload': {
+                                            'uuid': str(uuid4()),
+                                            'step_type': 'USER_SKIP',
+                                            'content': [{'content': {'text': 'Skipped'}, 'type': 'USER_TEXT', 'uuid': step_query['uuid']}]
+                                        }
+                                    }
+                                ]))
+
+
+                        if step_query['type'] == 'PROMPT_CHECKBOX':
+                            solver = solvers.get('checkbox', None)
+
+                            # use solver to answer if solver function is defined
+                            if solver:
+                                solver_answer = await solver(step_query['content']['description'], {int(x['id']): x['value'] for x in step_query['content']['options']})
+
+                                self.ws.send(f'{420 + self.n}' + json.dumps([
+                                    'perplexity_step',
+                                    query,
+                                    {
+                                        'version': '2.1',
+                                        'source': 'default',
+                                        'attachments': None,
+                                        'last_backend_uuid': self.backend_uuid,
+                                        'existing_entry_uuid': self.backend_uuid,
+                                        'read_write_token': '',
+                                        'search_focus': focus,
+                                        'frontend_uuid': self.frontend_uuid,
+                                        'step_payload': {
+                                            'uuid': str(uuid4()),
+                                            'step_type': 'USER_INPUT',
+                                            'content': [{'content': {'options': [x for x in step_query['content']['options'] if int(x['id']) in solver_answer]}, 'type': 'USER_CHECKBOX', 'uuid': step_query['uuid']}]
+                                        }
+                                    }
+                                ]))
+
+                            # skip the question if solver function is not defined
+                            else:
+                                self.ws.send(f'{420 + self.n}' + json.dumps([
+                                    'perplexity_step',
+                                    query,
+                                    {
+                                        'version': '2.1',
+                                        'source': 'default',
+                                        'attachments': None,
+                                        'last_backend_uuid': self.backend_uuid,
+                                        'existing_entry_uuid': self.backend_uuid,
+                                        'read_write_token': '',
+                                        'search_focus': focus,
+                                        'frontend_uuid': self.frontend_uuid,
+                                        'step_payload': {
+                                            'uuid': str(uuid4()),
+                                            'step_type': 'USER_SKIP',
+                                            'content': [{'content': {'options': []}, 'type': 'USER_CHECKBOX', 'uuid': step_query['uuid']}]
+                                        }
+                                    }
+                                ]))
+
+
+                self._last_answer = None
