@@ -60,13 +60,24 @@ def my_checkbox_prompt_solver(description, options):
 # modes = ['concise', 'copilot']
 # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia']
 # file = (data, filetype) perplexity supports two file types, txt and pdf
+# follow_up = uuid for follow-up queries, you can directly pass response json from a query, or you can pass uuid manually, look at second example below.
 # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
-print(perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt'), solvers={
+resp = perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt'), solvers={
     'text': my_text_prompt_solver,
     'checkbox': my_checkbox_prompt_solver
-    }))
+    })
+print(resp)
 
-# perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function when you're out of copilots
+# second example to show how to use follow-up queries
+# you can't use file uploads on follow-up queries
+# you can either pass response json from a query directly like below or you can manually pass 'backend_uuid' key's value from response json like: follow_up=resp['backend_uuid']
+resp = perplexity_cli.search('Your query here', mode='copilot', focus='internet', follow_up=resp, solvers={
+    'text': my_text_prompt_solver,
+    'checkbox': my_checkbox_prompt_solver
+    })
+print(resp)
+
+# perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function again when you're out of copilots
 ```
 
 # How To Use Asynchronous Version
@@ -99,13 +110,24 @@ async def test():
     # modes = ['concise', 'copilot']
     # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia']
     # file = (data, filetype) perplexity supports two file types, txt and pdf
+    # follow_up = uuid for follow-up queries, you can directly pass response json from a query, or you can pass uuid manually, look at second example below.
     # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
-    print(await perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt'), solvers={
+    resp = await perplexity_cli.search('Your query here', mode='copilot', focus='internet', file=(open('myfile.txt', 'rb').read(), 'txt'), solvers={
         'text': my_text_prompt_solver,
         'checkbox': my_checkbox_prompt_solver
-    }))
+    })
+    print(resp)
 
-    # await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function when you're out of copilots
+    # second example to show how to use follow-up queries
+    # you can't use file uploads on follow-up queries
+    # you can either pass response json from a query directly like below or you can manually pass 'backend_uuid' key's value from response json like: follow_up=resp['backend_uuid']
+    resp = await perplexity_cli.search('Your query here', mode='copilot', focus='internet', follow_up=resp, solvers={
+        'text': my_text_prompt_solver,
+        'checkbox': my_checkbox_prompt_solver
+    })
+    print(resp)
+
+    # await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function again when you're out of copilots
 
 asyncio.run(test())
 ```
