@@ -164,7 +164,7 @@ class Client:
                 self._last_file_upload_info = response
 
     # method to search on the webpage
-    def search(self, query, mode='concise', focus='internet', file=None, solvers={}):
+    def search(self, query, mode='concise', focus='internet', file=None, follow_up=None, solvers={}):
         assert mode in ['concise', 'copilot'], 'Search modes --> ["concise", "copilot"]'
         assert focus in ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia'], 'Search focus modes --> ["internet", "scholar", "writing", "wolfram", "youtube", "reddit", "wikipedia"]'
         assert self.copilot > 0 if mode == 'copilot' else True, 'You have used all of your copilots'
@@ -188,7 +188,7 @@ class Client:
                     'version': '2.1',
                     'source': 'default',
                     'mode': mode,
-                    'last_backend_uuid': None,
+                    'last_backend_uuid': follow_up if type(follow_up) == str else (follow_up['backend_uuid'] if type(follow_up) == dict else None),
                     'read_write_token': '',
                     'conversational_enabled': True,
                     'frontend_session_id': self.frontend_session_id,
@@ -265,7 +265,7 @@ class Client:
                         'version': '2.1',
                         'source': 'default',
                         'mode': mode,
-                        'last_backend_uuid': None,
+                        'last_backend_uuid': follow_up if type(follow_up) == str else (follow_up['backend_uuid'] if type(follow_up) == dict else None),
                         'read_write_token': '',
                         'conversational_enabled': True,
                         'frontend_session_id': self.frontend_session_id,
