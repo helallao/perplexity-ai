@@ -58,7 +58,7 @@ def my_checkbox_prompt_solver(description, options):
 
 
 # modes = ['concise', 'copilot']
-# focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia']
+# focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit']
 # file = (data, filetype) perplexity supports two file types, txt and pdf
 # follow_up = uuid for follow-up queries, you can directly pass response json from a query, or you can pass uuid manually, look at second example below.
 # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
@@ -108,7 +108,7 @@ async def test():
     await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 copilots will be renewed. You can pass this one if you are not going to use "copilot" mode
 
     # modes = ['concise', 'copilot']
-    # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit', 'wikipedia']
+    # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit']
     # file = (data, filetype) perplexity supports two file types, txt and pdf
     # follow_up = uuid for follow-up queries, you can directly pass response json from a query, or you can pass uuid manually, look at second example below.
     # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
