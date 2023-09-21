@@ -177,10 +177,57 @@ class Client:
         self._last_file_upload_info = None
 
 
-        if mode == 'concise':
-            if file:
-                raise Exception('File upload cannot be used in concise mode')
+        if file:
+            # request an upload URL for a file
+            self.ws.send(f'{420 + self.n}' + json.dumps([
+                'get_upload_url',
+                {
+                    'version': '2.1',
+                    'source': 'default',
+                    'content_type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]
+                }
+            ]))
 
+            # wait for response
+            while not self._last_file_upload_info:
+                pass
+
+            if not self._last_file_upload_info['success']:
+                raise Exception('File upload error', self._last_file_upload_info)
+
+            # requests_toolbelt's multipart encoder
+            monitor = MultipartEncoderMonitor(MultipartEncoder(fields={
+                **self._last_file_upload_info['fields'],
+                'file': ('myfile', file[0], {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]])
+            }))
+
+            if not (upload_resp := requests.post(self._last_file_upload_info['url'], data=monitor, headers={'Content-Type': monitor.content_type})).ok:
+                raise Exception('File upload error', upload_resp)
+
+            uploaded_file = self._last_file_upload_info['url'] + self._last_file_upload_info['fields']['key'].replace('${filename}', 'myfile')
+
+            # send search request with uploaded file as an attachment
+            self.ws.send(f'{420 + self.n}' + json.dumps([
+                'perplexity_ask',
+                query,
+                {
+                    'attachments': [uploaded_file],
+                    'version': '2.1',
+                    'source': 'default',
+                    'mode': mode,
+                    'last_backend_uuid': None,
+                    'read_write_token': '',
+                    'conversational_enabled': True,
+                    'frontend_session_id': self.frontend_session_id,
+                    'search_focus': focus,
+                    'frontend_uuid': self.frontend_uuid,
+                    'gpt4': False,
+                    'language': 'en-US',
+                }
+            ]))
+
+        # send search request without file
+        else:
             self.ws.send(f'{420 + self.n}' + json.dumps([
                 'perplexity_ask',
                 query,
@@ -199,194 +246,117 @@ class Client:
                 }
             ]))
 
-            # wait for response and return
+
+        # we will enter a loop here, ai will ask questions and prompt solvers will answer
+        while True:
             while not self._last_answer:
                 pass
 
-            return self._last_answer
+            # if ai finished asking questions, return answer
+            if self._last_answer['step_type'] == 'FINAL':
+                return self._last_answer
 
+            # if ai asking a question, use prompt solvers to answer
+            elif self._last_answer['step_type'] == 'PROMPT_INPUT':
+                self.backend_uuid = self._last_answer['backend_uuid']
 
-        if mode == 'copilot':
-            if file:
-                # request an upload URL for a file
-                self.ws.send(f'{420 + self.n}' + json.dumps([
-                    'get_upload_url',
-                    {
-                        'version': '2.1',
-                        'source': 'default',
-                        'content_type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]
-                    }
-                ]))
+                for step_query in self._last_answer['text'][-1]['content']['inputs']:
+                    if step_query['type'] == 'PROMPT_TEXT':
+                        solver = solvers.get('text', None)
 
-                # wait for response
-                while not self._last_file_upload_info:
-                    pass
-
-                if not self._last_file_upload_info['success']:
-                    raise Exception('File upload error', self._last_file_upload_info)
-
-                # requests_toolbelt's multipart encoder
-                monitor = MultipartEncoderMonitor(MultipartEncoder(fields={
-                    **self._last_file_upload_info['fields'],
-                    'file': ('myfile', file[0], {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]])
-                }))
-
-                if not (upload_resp := requests.post(self._last_file_upload_info['url'], data=monitor, headers={'Content-Type': monitor.content_type})).ok:
-                    raise Exception('File upload error', upload_resp)
-
-                uploaded_file = self._last_file_upload_info['url'] + self._last_file_upload_info['fields']['key'].replace('${filename}', 'myfile')
-
-                # send search request with uploaded file as an attachment
-                self.ws.send(f'{420 + self.n}' + json.dumps([
-                    'perplexity_ask',
-                    query,
-                    {
-                        'attachments': [uploaded_file],
-                        'version': '2.1',
-                        'source': 'default',
-                        'mode': mode,
-                        'last_backend_uuid': None,
-                        'read_write_token': '',
-                        'conversational_enabled': True,
-                        'frontend_session_id': self.frontend_session_id,
-                        'search_focus': focus,
-                        'frontend_uuid': self.frontend_uuid,
-                        'gpt4': False,
-                        'language': 'en-US',
-                    }
-                ]))
-
-            # send search request without file
-            else:
-                self.ws.send(f'{420 + self.n}' + json.dumps([
-                    'perplexity_ask',
-                    query,
-                    {
-                        'version': '2.1',
-                        'source': 'default',
-                        'mode': mode,
-                        'last_backend_uuid': follow_up if type(follow_up) == str else (follow_up['backend_uuid'] if type(follow_up) == dict else None),
-                        'read_write_token': '',
-                        'conversational_enabled': True,
-                        'frontend_session_id': self.frontend_session_id,
-                        'search_focus': focus,
-                        'frontend_uuid': self.frontend_uuid,
-                        'gpt4': False,
-                        'language': 'en-US',
-                    }
-                ]))
-
-
-            # we will enter a loop here, ai will ask questions and prompt solvers will answer
-            while True:
-                while not self._last_answer:
-                    pass
-
-                # if ai finished asking questions, return answer
-                if self._last_answer['step_type'] == 'FINAL':
-                    return self._last_answer
-
-                # if ai asking a question, use prompt solvers to answer
-                elif self._last_answer['step_type'] == 'PROMPT_INPUT':
-                    self.backend_uuid = self._last_answer['backend_uuid']
-
-                    for step_query in self._last_answer['text'][-1]['content']['inputs']:
-                        if step_query['type'] == 'PROMPT_TEXT':
-                            solver = solvers.get('text', None)
-
-                            # use solver to answer if solver function is defined
-                            if solver:
-                                self.ws.send(f'{420 + self.n}' + json.dumps([
-                                    'perplexity_step',
-                                    query,
-                                    {
-                                        'version': '2.1',
-                                        'source': 'default',
-                                        'attachments': None,
-                                        'last_backend_uuid': self.backend_uuid,
-                                        'existing_entry_uuid': self.backend_uuid,
-                                        'read_write_token': '',
-                                        'search_focus': focus,
-                                        'frontend_uuid': self.frontend_uuid,
-                                        'step_payload': {
-                                            'uuid': str(uuid4()),
-                                            'step_type': 'USER_INPUT',
-                                            'content': [{'content': {'text': solver(step_query['content']['description'])[:2000]}, 'type': 'USER_TEXT', 'uuid': step_query['uuid']}]
-                                        }
+                        # use solver to answer if solver function is defined
+                        if solver:
+                            self.ws.send(f'{420 + self.n}' + json.dumps([
+                                'perplexity_step',
+                                query,
+                                {
+                                    'version': '2.1',
+                                    'source': 'default',
+                                    'attachments': None,
+                                    'last_backend_uuid': self.backend_uuid,
+                                    'existing_entry_uuid': self.backend_uuid,
+                                    'read_write_token': '',
+                                    'search_focus': focus,
+                                    'frontend_uuid': self.frontend_uuid,
+                                    'step_payload': {
+                                        'uuid': str(uuid4()),
+                                        'step_type': 'USER_INPUT',
+                                        'content': [{'content': {'text': solver(step_query['content']['description'])[:2000]}, 'type': 'USER_TEXT', 'uuid': step_query['uuid']}]
                                     }
-                                ]))
+                                }
+                            ]))
 
-                            # skip the question if solver function is not defined
-                            else:
-                                self.ws.send(f'{420 + self.n}' + json.dumps([
-                                    'perplexity_step',
-                                    query,
-                                    {
-                                        'version': '2.1',
-                                        'source': 'default',
-                                        'attachments': None,
-                                        'last_backend_uuid': self.backend_uuid,
-                                        'existing_entry_uuid': self.backend_uuid,
-                                        'read_write_token': '',
-                                        'search_focus': focus,
-                                        'frontend_uuid': self.frontend_uuid,
-                                        'step_payload': {
-                                            'uuid': str(uuid4()),
-                                            'step_type': 'USER_SKIP',
-                                            'content': [{'content': {'text': 'Skipped'}, 'type': 'USER_TEXT', 'uuid': step_query['uuid']}]
-                                        }
+                        # skip the question if solver function is not defined
+                        else:
+                            self.ws.send(f'{420 + self.n}' + json.dumps([
+                                'perplexity_step',
+                                query,
+                                {
+                                    'version': '2.1',
+                                    'source': 'default',
+                                    'attachments': None,
+                                    'last_backend_uuid': self.backend_uuid,
+                                    'existing_entry_uuid': self.backend_uuid,
+                                    'read_write_token': '',
+                                    'search_focus': focus,
+                                    'frontend_uuid': self.frontend_uuid,
+                                    'step_payload': {
+                                        'uuid': str(uuid4()),
+                                        'step_type': 'USER_SKIP',
+                                        'content': [{'content': {'text': 'Skipped'}, 'type': 'USER_TEXT', 'uuid': step_query['uuid']}]
                                     }
-                                ]))
+                                }
+                            ]))
 
 
-                        if step_query['type'] == 'PROMPT_CHECKBOX':
-                            solver = solvers.get('checkbox', None)
+                    if step_query['type'] == 'PROMPT_CHECKBOX':
+                        solver = solvers.get('checkbox', None)
 
-                            # use solver to answer if solver function is defined
-                            if solver:
-                                solver_answer = solver(step_query['content']['description'], {int(x['id']): x['value'] for x in step_query['content']['options']})
+                        # use solver to answer if solver function is defined
+                        if solver:
+                            solver_answer = solver(step_query['content']['description'], {int(x['id']): x['value'] for x in step_query['content']['options']})
 
-                                self.ws.send(f'{420 + self.n}' + json.dumps([
-                                    'perplexity_step',
-                                    query,
-                                    {
-                                        'version': '2.1',
-                                        'source': 'default',
-                                        'attachments': None,
-                                        'last_backend_uuid': self.backend_uuid,
-                                        'existing_entry_uuid': self.backend_uuid,
-                                        'read_write_token': '',
-                                        'search_focus': focus,
-                                        'frontend_uuid': self.frontend_uuid,
-                                        'step_payload': {
-                                            'uuid': str(uuid4()),
-                                            'step_type': 'USER_INPUT',
-                                            'content': [{'content': {'options': [x for x in step_query['content']['options'] if int(x['id']) in solver_answer]}, 'type': 'USER_CHECKBOX', 'uuid': step_query['uuid']}]
-                                        }
+                            self.ws.send(f'{420 + self.n}' + json.dumps([
+                                'perplexity_step',
+                                query,
+                                {
+                                    'version': '2.1',
+                                    'source': 'default',
+                                    'attachments': None,
+                                    'last_backend_uuid': self.backend_uuid,
+                                    'existing_entry_uuid': self.backend_uuid,
+                                    'read_write_token': '',
+                                    'search_focus': focus,
+                                    'frontend_uuid': self.frontend_uuid,
+                                    'step_payload': {
+                                        'uuid': str(uuid4()),
+                                        'step_type': 'USER_INPUT',
+                                        'content': [{'content': {'options': [x for x in step_query['content']['options'] if int(x['id']) in solver_answer]}, 'type': 'USER_CHECKBOX', 'uuid': step_query['uuid']}]
                                     }
-                                ]))
+                                }
+                            ]))
 
-                            # skip the question if solver function is not defined
-                            else:
-                                self.ws.send(f'{420 + self.n}' + json.dumps([
-                                    'perplexity_step',
-                                    query,
-                                    {
-                                        'version': '2.1',
-                                        'source': 'default',
-                                        'attachments': None,
-                                        'last_backend_uuid': self.backend_uuid,
-                                        'existing_entry_uuid': self.backend_uuid,
-                                        'read_write_token': '',
-                                        'search_focus': focus,
-                                        'frontend_uuid': self.frontend_uuid,
-                                        'step_payload': {
-                                            'uuid': str(uuid4()),
-                                            'step_type': 'USER_SKIP',
-                                            'content': [{'content': {'options': []}, 'type': 'USER_CHECKBOX', 'uuid': step_query['uuid']}]
-                                        }
+                        # skip the question if solver function is not defined
+                        else:
+                            self.ws.send(f'{420 + self.n}' + json.dumps([
+                                'perplexity_step',
+                                query,
+                                {
+                                    'version': '2.1',
+                                    'source': 'default',
+                                    'attachments': None,
+                                    'last_backend_uuid': self.backend_uuid,
+                                    'existing_entry_uuid': self.backend_uuid,
+                                    'read_write_token': '',
+                                    'search_focus': focus,
+                                    'frontend_uuid': self.frontend_uuid,
+                                    'step_payload': {
+                                        'uuid': str(uuid4()),
+                                        'step_type': 'USER_SKIP',
+                                        'content': [{'content': {'options': []}, 'type': 'USER_CHECKBOX', 'uuid': step_query['uuid']}]
                                     }
-                                ]))
+                                }
+                            ]))
 
 
-                self._last_answer = None
+            self._last_answer = None
