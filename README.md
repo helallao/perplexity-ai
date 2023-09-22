@@ -62,7 +62,7 @@ def my_checkbox_prompt_solver(description, options):
 # files = file list, each element of list is tuple like this: (data, filetype) perplexity supports two file types, txt and pdf
 # follow_up = last query info for follow-up queries, you can directly pass response json from a query, look at second example below.
 # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
-resp = perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.txt', 'rb').read(), 'txt')], solvers={
+resp = perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], solvers={
     'text': my_text_prompt_solver,
     'checkbox': my_checkbox_prompt_solver
     })
@@ -112,7 +112,7 @@ async def test():
     # files = file list, each element of list is tuple like this: (data, filetype) perplexity supports two file types, txt and pdf
     # follow_up = last query info for follow-up queries, you can directly pass response json from a query, look at second example below.
     # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
-    resp = await perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.txt', 'rb').read(), 'txt')], solvers={
+    resp = await perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], solvers={
         'text': my_text_prompt_solver,
         'checkbox': my_checkbox_prompt_solver
     })
