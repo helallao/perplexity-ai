@@ -194,59 +194,66 @@ class Client(AsyncMixin):
                 self._last_file_upload_info = response
 
     # method to search on the webpage
-    async def search(self, query, mode='concise', focus='internet', file=None, follow_up=None, solvers={}):
+    async def search(self, query, mode='concise', focus='internet', files=[], follow_up=None, solvers={}):
         assert mode in ['concise', 'copilot'], 'Search modes --> ["concise", "copilot"]'
         assert focus in ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit'], 'Search focus modes --> ["internet", "scholar", "writing", "wolfram", "youtube", "reddit"]'
         assert self.copilot > 0 if mode == 'copilot' else True, 'You have used all of your copilots'
-        assert self.file_upload > 0 if file else True, 'You have used all of your file uploads'
+        assert self.file_upload - len(files) >= 0 if files else True, f'You have tried to upload {len(files)} files but you have {self.file_upload} file upload(s) remaining.'
 
         self.copilot = self.copilot - 1 if mode == 'copilot' else self.copilot
-        self.file_upload = self.file_upload - 1 if file else self.file_upload
+        self.file_upload = self.file_upload - len(files) if files else self.file_upload
         self.n += 1
         self._last_answer = None
         self._last_file_upload_info = None
 
 
-        if file:
-            # request an upload URL for a file
-            self.ws.send(f'{420 + self.n}' + json.dumps([
-                'get_upload_url',
-                {
-                    'version': '2.1',
-                    'source': 'default',
-                    'content_type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]
-                }
-            ]))
+        if files:
+            if follow_up:
+                raise Exception('File upload cannot be used in follow-up queries')
 
-            # wait for response
-            while not self._last_file_upload_info:
-                pass
+            uploaded_files = []
 
-            if not self._last_file_upload_info['success']:
-                raise Exception('File upload error', self._last_file_upload_info)
+            for file_id, file in enumerate(files):
+                # request an upload URL for a file
+                self.ws.send(f'{420 + self.n}' + json.dumps([
+                    'get_upload_url',
+                    {
+                        'version': '2.1',
+                        'source': 'default',
+                        'content_type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]
+                    }
+                ]))
+    
+                # wait for response
+                while not self._last_file_upload_info:
+                    pass
+                self.n += 1
+    
+                if not self._last_file_upload_info['success']:
+                    raise Exception('File upload error', self._last_file_upload_info)
+    
+                # aiohttp's own multipart encoder
+                with aiohttp.MultipartWriter("form-data") as mp:
+                    for field_name, field_value in self._last_file_upload_info['fields'].items():
+                        part = mp.append(field_value)
+                        part.set_content_disposition('form-data', name=field_name)
+    
+                    part = mp.append(file[0], {'Content-Type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]})
+                    part.set_content_disposition('form-data', name='file', filename=f'myfile{file_id}')
+    
+                    upload_resp = await self.session.post(self._last_file_upload_info['url'], data=mp, headers={'Content-Type': mp.content_type})
+    
+                if not upload_resp.ok:
+                    raise Exception('File upload error', upload_resp)
+    
+                uploaded_files.append(self._last_file_upload_info['url'] + self._last_file_upload_info['fields']['key'].replace('${filename}', f'myfile{file_id}'))
 
-            # aiohttp's own multipart encoder
-            with aiohttp.MultipartWriter("form-data") as mp:
-                for field_name, field_value in self._last_file_upload_info['fields'].items():
-                    part = mp.append(field_value)
-                    part.set_content_disposition('form-data', name=field_name)
-
-                part = mp.append(file[0], {'Content-Type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]})
-                part.set_content_disposition('form-data', name='file', filename='myfile')
-
-                upload_resp = await self.session.post(self._last_file_upload_info['url'], data=mp, headers={'Content-Type': mp.content_type})
-
-            if not upload_resp.ok:
-                raise Exception('File upload error', upload_resp)
-
-            uploaded_file = self._last_file_upload_info['url'] + self._last_file_upload_info['fields']['key'].replace('${filename}', 'myfile')
-
-            # send search request with uploaded file as an attachment
+            # send search request with uploaded files as attachments
             self.ws.send(f'{420 + self.n}' + json.dumps([
                 'perplexity_ask',
                 query,
                 {
-                    'attachments': [uploaded_file],
+                    'attachments': uploaded_files,
                     'version': '2.1',
                     'source': 'default',
                     'mode': mode,
@@ -267,10 +274,11 @@ class Client(AsyncMixin):
                 'perplexity_ask',
                 query,
                 {
+                    'attachments': follow_up['attachments'] if follow_up else None,
                     'version': '2.1',
                     'source': 'default',
                     'mode': mode,
-                    'last_backend_uuid': follow_up if type(follow_up) == str else (follow_up['backend_uuid'] if type(follow_up) == dict else None),
+                    'last_backend_uuid': follow_up['backend_uuid'] if follow_up else None,
                     'read_write_token': '',
                     'conversational_enabled': True,
                     'frontend_session_id': self.frontend_session_id,
@@ -307,7 +315,7 @@ class Client(AsyncMixin):
                                 {
                                     'version': '2.1',
                                     'source': 'default',
-                                    'attachments': None,
+                                    'attachments': self._last_answer['attachments'],
                                     'last_backend_uuid': self.backend_uuid,
                                     'existing_entry_uuid': self.backend_uuid,
                                     'read_write_token': '',
@@ -329,7 +337,7 @@ class Client(AsyncMixin):
                                 {
                                     'version': '2.1',
                                     'source': 'default',
-                                    'attachments': None,
+                                    'attachments': self._last_answer['attachments'],
                                     'last_backend_uuid': self.backend_uuid,
                                     'existing_entry_uuid': self.backend_uuid,
                                     'read_write_token': '',
@@ -357,7 +365,7 @@ class Client(AsyncMixin):
                                 {
                                     'version': '2.1',
                                     'source': 'default',
-                                    'attachments': None,
+                                    'attachments': self._last_answer['attachments'],
                                     'last_backend_uuid': self.backend_uuid,
                                     'existing_entry_uuid': self.backend_uuid,
                                     'read_write_token': '',
@@ -379,7 +387,7 @@ class Client(AsyncMixin):
                                 {
                                     'version': '2.1',
                                     'source': 'default',
-                                    'attachments': None,
+                                    'attachments': self._last_answer['attachments'],
                                     'last_backend_uuid': self.backend_uuid,
                                     'existing_entry_uuid': self.backend_uuid,
                                     'read_write_token': '',
