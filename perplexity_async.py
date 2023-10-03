@@ -21,6 +21,15 @@ def cookiejar_to_dict(cookie_jar):
 
     return new
 
+# utility function for case-sensitive header names, to convert lower case header names to upper case taken from curlconverter.com
+def case_fixer(headers):
+    new_headers = {}
+
+    for key, value in headers.items():
+        new_headers.update({'-'.join([word[0].upper() + word[1:] for word in key.split('-')]): value})
+    
+    return new_headers
+
 
 # https://dev.to/akarshan/asynchronous-python-magic-how-to-create-awaitable-constructors-with-asyncmixin-18j5
 # https://web.archive.org/web/20230915163459/https://dev.to/akarshan/asynchronous-python-magic-how-to-create-awaitable-constructors-with-asyncmixin-18j5
@@ -96,7 +105,7 @@ class Emailnator(AsyncMixin):
 # client class for interactions with perplexity ai webpage
 class Client(AsyncMixin):
     async def __ainit__(self, headers, cookies):
-        self.session = aiohttp.ClientSession(headers=headers, cookies=cookies)
+        self.session = aiohttp.ClientSession(headers=case_fixer(headers), cookies=cookies)
 
         await self.session.get(f'https://www.perplexity.ai/search/{str(uuid4())}')
 
