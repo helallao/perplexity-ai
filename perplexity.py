@@ -12,6 +12,16 @@ from threading import Thread
 def souper(x):
     return BeautifulSoup(x, 'lxml')
 
+# utility function for case-sensitive header names, to convert lower case header names to upper case taken from curlconverter.com
+def case_fixer(headers):
+    new_headers = {}
+
+    for key, value in headers.items():
+        new_headers.update({'-'.join([word[0].upper() + word[1:] for word in key.split('-')]): value})
+    
+    return new_headers
+
+
 # client class for emailnator
 class Emailnator:
     def __init__(self, headers, cookies, domain=False, plus=False, dot=True, google_mail=False):
@@ -21,7 +31,7 @@ class Emailnator:
 
         # create session with provided headers & cookies
         self.s = requests.Session()
-        self.s.headers.update(headers)
+        self.s.headers.update(case_fixer(headers))
         self.s.cookies.update(cookies)
 
         # preparing data for email generation
@@ -68,7 +78,7 @@ class Emailnator:
 class Client:
     def __init__(self, headers, cookies):
         self.session = requests.Session()
-        self.session.headers.update(headers)
+        self.session.headers.update(case_fixer(headers))
         self.session.cookies.update(cookies)
         self.session.get(f'https://www.perplexity.ai/search/{str(uuid4())}')
 
@@ -90,7 +100,7 @@ class Client:
         self.ws = WebSocketApp(
             url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
             cookie='; '.join([f'{x}={y}' for x, y in self.session.cookies.get_dict().items()]),
-            header={'user-agent': self.session.headers['user-agent']},
+            header={'User-Agent': self.session.headers['User-Agent']},
             on_open=lambda ws: ws.send('2probe'),
             on_message=self.on_message,
             on_error=lambda ws, err: print(f'Error: {err}'),
@@ -135,7 +145,7 @@ class Client:
             self.ws = WebSocketApp(
                 url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
                 cookie='; '.join([f'{x}={y}' for x, y in self.session.cookies.get_dict().items()]),
-                header={'user-agent': self.session.headers['user-agent']},
+                header={'User-Agent': self.session.headers['User-Agent']},
                 on_open=lambda ws: ws.send('2probe'),
                 on_message=self.on_message,
                 on_error=lambda ws, err: print(f'Error: {err}'),
