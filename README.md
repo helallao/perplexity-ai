@@ -101,7 +101,7 @@ print(resp2)
 
 
 <details>
-<summary><h2>How To Use Labs</h2></summary>
+<summary><h2>Labs</h2></summary>
 <br>
 
 ```python3
@@ -113,8 +113,9 @@ print(labs_cli.ask('hi'))
 
 </details>
 
+<br>
 
-# How To Use Asynchronous Version
+# Asynchronous Version
 
 ```python3
 import perplexity_async
@@ -179,7 +180,7 @@ asyncio.run(test())
 
 
 <details>
-<summary><h2>How To Use Asynchronous Labs</h2></summary>
+<summary><h2>Asynchronous Labs</h2></summary>
 <br>
 
 ```python3
