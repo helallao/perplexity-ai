@@ -60,7 +60,7 @@ class Emailnator(AsyncMixin):
         self.inbox_ads = []
 
         # create session with provided headers & cookies
-        self.s = aiohttp.ClientSession(headers=headers, cookies=cookies)
+        self.s = aiohttp.ClientSession(headers=case_fixer(headers), cookies=cookies)
 
         # preparing data for email generation
         data = {'email': []}
