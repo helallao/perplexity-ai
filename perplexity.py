@@ -83,7 +83,6 @@ class Client:
         self.session = requests.Session()
         self.session.headers.update(case_fixer(headers))
         self.session.cookies.update(cookies)
-        self.session.get(f'https://www.perplexity.ai/search/{str(uuid4())}')
 
         # generate random values for session init
         self.t = format(random.getrandbits(32), '08x')
@@ -116,27 +115,31 @@ class Client:
     # method to create an account on the webpage
     def create_account(self, headers, cookies):
         while True:
-            emailnator_cli = Emailnator(headers, cookies, dot=False, google_mail=True)
+            # sometimes mails from emailnator are out of order, we will pass and create a new one if it is
+            try:
+                emailnator_cli = Emailnator(headers, cookies, dot=False, google_mail=True)
 
-            # send sign in link to email
-            resp = self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
-                'email': emailnator_cli.email,
-                'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
-                'callbackUrl': 'https://www.perplexity.ai/',
-                'json': 'true',
-            })
+                # send sign in link to email
+                resp = self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
+                    'email': emailnator_cli.email,
+                    'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
+                    'callbackUrl': 'https://www.perplexity.ai/',
+                    'json': 'true',
+                })
 
-            if resp.ok:
-                # get the link from mail and open, you will be signed in directly when you open link
-                new_msgs = emailnator_cli.reload(wait=True)
+                if resp.ok:
+                    new_msgs = emailnator_cli.reload(wait=True)
 
-                # sometimes mails from emailnator doesn't work properly and it causes a loop here, we will pass and create a new one if it is
-                if new_msgs:
-                    break
+                    if new_msgs:
+                        break
+    
+                else:
+                    print('Perplexity account creating error:', resp)
 
-            else:
-                raise Exception('Account creating error', resp, resp.text)
+            except:
+                pass
 
+        # open the link received from mail, you will be signed in directly when you open link
         new_account_link = souper(emailnator_cli.open(new_msgs[0]['messageID'])).select('a')[1].get('href')
 
         self.session.get(new_account_link)
@@ -390,3 +393,71 @@ class Client:
 
 
             self._last_answer = None
+
+
+# client class for interactions with perplexity ai labs webpage
+class LabsClient:
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'})
+        self.session.get('https://labs-api.perplexity.ai/')
+
+        # generate random values for session init
+        self.t = format(random.getrandbits(32), '08x')
+        self.sid = json.loads(self.session.get(f'https://labs-api.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}').text[1:])['sid']
+        self._last_answer = None
+        self.history = []
+
+        assert self.session.post(f'https://labs-api.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
+        self.session.get(f'https://labs-api.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}')
+
+        # setup websocket communication
+        self.ws = WebSocketApp(
+            url=f'wss://labs-api.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
+            cookie='; '.join([f'{x}={y}' for x, y in self.session.cookies.get_dict().items()]),
+            header={'User-Agent': self.session.headers['User-Agent']},
+            on_open=lambda ws: ws.send('2probe'),
+            on_message=self.on_message,
+            on_error=lambda ws, err: print(f'Error: {err}'),
+        )
+
+        # start webSocket thread
+        Thread(target=self.ws.run_forever).start()
+        time.sleep(1)
+
+    # message handler function for Websocket
+    def on_message(self, ws, message):
+        if message == '2':
+            ws.send('3')
+        elif message == '3probe':
+            ws.send('5')
+
+        if message.startswith('42'):
+            response = json.loads(message[2:])[1]
+
+            if 'status' in response:
+                self._last_answer = response
+                self.history.append({'role': 'assistant', 'content': response['output'], 'priority': 0})
+
+    # method to ask to perplexity labs
+    def ask(self, query, model='pplx-7b-chat-alpha'):
+        assert model in ['pplx-7b-chat-alpha', 'pplx-70b-chat-alpha', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-13b-chat', 'llama-2-70b-chat'], 'Search modes --> ["pplx-7b-chat-alpha", "pplx-70b-chat-alpha", "mistral-7b-instruct", "codellama-34b-instruct", "llama-2-13b-chat", "llama-2-70b-chat"]'
+
+        self._last_answer = None
+        self.history.append({'role': 'user', 'content': query, 'priority': 0})
+
+        self.ws.send('42' + json.dumps([
+            'perplexity_playground',
+            {
+                'version': '2.1',
+                'source': 'default',
+                'model': model,
+                'messages': self.history
+            }
+        ]))
+
+
+        while not self._last_answer:
+            pass
+
+        return self._last_answer
