@@ -81,7 +81,7 @@ class Emailnator(AsyncMixin):
             self.inbox_ads.append(ads['messageID'])
 
     # reload inbox messages
-    async def reload(self, wait=False, retry_timeout=5):
+    async def reload(self, wait=False, retry_timeout=1):
         self.new_msgs = []
 
         while True:
@@ -235,7 +235,7 @@ class Client(AsyncMixin):
     
                 # wait for response
                 while not self._last_file_upload_info:
-                    pass
+                    await asyncio.sleep(0.01)
                 self.n += 1
     
                 if not self._last_file_upload_info['success']:
@@ -302,7 +302,7 @@ class Client(AsyncMixin):
         # we will enter a loop here, ai will ask questions and prompt solvers will answer
         while True:
             while not self._last_answer:
-                pass
+                await asyncio.sleep(0.01)
 
             # if ai finished asking questions, return answer
             if self._last_answer['step_type'] == 'FINAL':
