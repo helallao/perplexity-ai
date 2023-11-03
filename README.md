@@ -170,4 +170,4 @@ Do not forget these cookies are temporary, so you need to renew them continuousl
 
 # Thanks To
 * [perplexityai](https://github.com/nathanrchn/perplexityai) by [nathanrchn](https://github.com/nathanrchn)
-* [dominicOT](https://github.com/dominicOT) for his contributions
+* [dominicOT](https://github.com/dominicOT) and [Kerry1207](https://github.com/Kerry1207) for their contributions
