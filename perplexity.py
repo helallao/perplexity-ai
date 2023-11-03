@@ -135,7 +135,7 @@ class Client:
                     break
 
             else:
-                raise Exception('Account creating error', self.resp, self.resp.text)
+                raise Exception('Account creating error', resp, resp.text)
 
         new_account_link = souper(emailnator_cli.open(new_msgs[0]['messageID'])).select('a')[1].get('href')
 
