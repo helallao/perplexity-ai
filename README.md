@@ -5,6 +5,11 @@ This module is simply just an API Wrapper and account generator. It serves as an
 This module uses [emailnator](https://emailnator.com/) to generate new accounts. As you know, when you create a new account, you will have 5 copilots. That's how it works! This module will generate you new gmails (using @googlemail.com right now) with [emailnator](https://emailnator.com/) and you will have **UNLIMITED COPILOTS!**
 
 # Requirements
+
+<details>
+<summary>Click to expand</summary>
+<br>
+
 * [requests](https://pypi.org/project/requests/)
 * [requests-toolbelt](https://pypi.org/project/requests-toolbelt/)
 * [beautifulsoup4](https://pypi.org/project/beautifulsoup4/)
@@ -28,6 +33,10 @@ and aiohttp if you are going to use asynchronous version:
 ```sh
 pip3 install aiohttp
 ```
+
+</details>
+
+
 
 # How To Use
 First thing first, [Perplexity.ai](https://perplexity.ai/) is protected by cloudflare, and [emailnator](https://emailnator.com/) too. We need to open this pages manually and get the cookies. Do not forget these cookies are temporary, so you need to renew them continuously. [Here](#how-to-get-the-cookies) how to get your cookies.
@@ -183,6 +192,7 @@ asyncio.run(test())
 
 </details>
 
+<br>
 
 
 # How To Get The Cookies
