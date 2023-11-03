@@ -53,7 +53,7 @@ class Emailnator:
             self.inbox_ads.append(ads['messageID'])
 
     # reload inbox messages
-    def reload(self, wait=False, retry_timeout=5):
+    def reload(self, wait=False, retry_timeout=1):
         self.new_msgs = []
 
         while True:
