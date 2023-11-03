@@ -90,6 +90,21 @@ print(resp2)
 # perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function again when you run out of copilots
 ```
 
+
+<details>
+<summary><h2>How To Use Labs</h2></summary>
+<br>
+
+```python3
+import perplexity
+
+labs_cli = perplexity.LabsClient()
+print(labs_cli.ask('hi'))
+```
+
+</details>
+
+
 # How To Use Asynchronous Version
 ```python3
 import perplexity_async
@@ -151,6 +166,24 @@ async def test():
 
 asyncio.run(test())
 ```
+
+<details>
+<summary><h2>How To Use Asynchronous Labs</h2></summary>
+<br>
+
+```python3
+import perplexity_async
+
+async def test():
+    labs_cli = await perplexity_async.LabsClient()
+    print(await labs_cli.ask('hi'))
+
+asyncio.run(test())
+```
+
+</details>
+
+
 
 # How To Get The Cookies
 Do not forget these cookies are temporary, so you need to renew them continuously.
