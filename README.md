@@ -41,6 +41,10 @@ pip3 install aiohttp
 # How To Use
 First thing first, [Perplexity.ai](https://perplexity.ai/) is protected by cloudflare, and [emailnator](https://emailnator.com/) too. We need to open this pages manually and get the cookies. Do not forget these cookies are temporary, so you need to renew them continuously. [Here](#how-to-get-the-cookies) how to get your cookies.
 
+<details>
+<summary>Click to show code examples</summary>
+<br>
+
 ```python3
 import perplexity
 
@@ -99,6 +103,8 @@ print(resp2)
 # perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function again when you run out of copilots
 ```
 
+</details>
+
 
 <details>
 <summary><h2>How To Use Labs</h2></summary>
@@ -115,6 +121,11 @@ print(labs_cli.ask('hi'))
 
 
 # How To Use Asynchronous Version
+
+<details>
+<summary>Click to show code examples</summary>
+<br>
+
 ```python3
 import perplexity_async
 import asyncio
@@ -175,6 +186,8 @@ async def test():
 
 asyncio.run(test())
 ```
+
+</details>
 
 <details>
 <summary><h2>How To Use Asynchronous Labs</h2></summary>
