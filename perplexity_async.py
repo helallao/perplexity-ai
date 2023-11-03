@@ -81,15 +81,18 @@ class Emailnator(AsyncMixin):
             self.inbox_ads.append(ads['messageID'])
 
     # reload inbox messages
-    async def reload(self, wait=False, retry_timeout=1):
+    async def reload(self, wait=False, retry_timeout=1, max_retry=10):
         self.new_msgs = []
+        retry_count = 0
 
         while True:
             for msg in (await (await self.s.post('https://www.emailnator.com/message-list', json={'email': self.email})).json())['messageData']:
                 if msg['messageID'] not in self.inbox_ads and msg not in self.inbox:
                     self.new_msgs.append(msg)
 
-            if wait and not self.new_msgs:
+            retry_count += 1
+
+            if wait and retry_count < max_retry and not self.new_msgs:
                 await asyncio.sleep(retry_timeout)
             else:
                 break
@@ -138,51 +141,60 @@ class Client(AsyncMixin):
 
     # method to create an account on the webpage
     async def create_account(self, headers, cookies):
-        emailnator_cli = await Emailnator(headers, cookies, dot=False, google_mail=True)
+        while True:
+            emailnator_cli = await Emailnator(headers, cookies, dot=False, google_mail=True)
+    
+            # send sign in link to email
+            resp = await self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
+                'email': emailnator_cli.email,
+                'csrfToken': cookiejar_to_dict(self.session.cookie_jar)['next-auth.csrf-token'].split('%')[0],
+                'callbackUrl': 'https://www.perplexity.ai/',
+                'json': 'true',
+            })
+    
+            if resp.ok:
+                # get the link from mail and open, you will be signed in directly when you open link
+                new_msgs = await emailnator_cli.reload(wait=True)
 
-        # send sign in link to email
-        resp = await self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
-            'email': emailnator_cli.email,
-            'csrfToken': cookiejar_to_dict(self.session.cookie_jar)['next-auth.csrf-token'].split('%')[0],
-            'callbackUrl': 'https://www.perplexity.ai/',
-            'json': 'true',
-        })
+                # sometimes mails from emailnator doesn't work properly and it causes a loop here, we will pass and create a new one if it is
+                if new_msgs:
+                    break
 
-        if resp.ok:
-            # get the link from mail and open, you will be signed in directly when you open link
-            new_msgs = await emailnator_cli.reload(wait=True)
-            new_account_link = souper(await emailnator_cli.open(new_msgs[0]['messageID'])).select('a')[1].get('href')
-            await emailnator_cli.s.close()
+            else:
+                raise Exception('Account creating error', resp, await resp.text())
 
-            await self.session.get(new_account_link)
-            await self.session.get('https://www.perplexity.ai/')
+        new_account_link = souper(await emailnator_cli.open(new_msgs[0]['messageID'])).select('a')[1].get('href')
+        await emailnator_cli.s.close()
 
-            self.copilot = 5
-            self.file_upload = 3
+        await self.session.get(new_account_link)
+        await self.session.get('https://www.perplexity.ai/')
 
-            self.ws.close()
+        self.copilot = 5
+        self.file_upload = 3
 
-            # generate random values for session init
-            self.t = format(random.getrandbits(32), '08x')
-            self.sid = json.loads((await (await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}')).text())[1:])['sid']
+        self.ws.close()
 
-            assert (await (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text()) == 'OK'
+        # generate random values for session init
+        self.t = format(random.getrandbits(32), '08x')
+        self.sid = json.loads((await (await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}')).text())[1:])['sid']
 
-            # reconfig - WebSocket communication
-            self.ws = WebSocketApp(
-                url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
-                cookie='; '.join([f'{x}={y}' for x, y in cookiejar_to_dict(self.session.cookie_jar).items()]),
-                header={'User-Agent': self.session.headers['User-Agent']},
-                on_open=lambda ws: ws.send('2probe'),
-                on_message=self.on_message,
-                on_error=lambda ws, err: print(f'Error: {err}'),
-            )
+        assert (await (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text()) == 'OK'
 
-            # start WebSocket thread
-            Thread(target=self.ws.run_forever).start()
-            await asyncio.sleep(1)
+        # reconfig - WebSocket communication
+        self.ws = WebSocketApp(
+            url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
+            cookie='; '.join([f'{x}={y}' for x, y in cookiejar_to_dict(self.session.cookie_jar).items()]),
+            header={'User-Agent': self.session.headers['User-Agent']},
+            on_open=lambda ws: ws.send('2probe'),
+            on_message=self.on_message,
+            on_error=lambda ws, err: print(f'Error: {err}'),
+        )
 
-            return True
+        # start WebSocket thread
+        Thread(target=self.ws.run_forever).start()
+        await asyncio.sleep(1)
+
+        return True
 
     # message handler function for Websocket
     def on_message(self, ws, message):
