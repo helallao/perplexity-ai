@@ -108,7 +108,9 @@ print(resp2)
 import perplexity
 
 labs_cli = perplexity.LabsClient()
-print(labs_cli.ask('hi'))
+
+# model = ['pplx-7b-chat-alpha', 'pplx-70b-chat-alpha', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-13b-chat', 'llama-2-70b-chat']
+print(labs_cli.ask('hi', model='pplx-7b-chat-alpha'))
 ```
 
 </details>
@@ -188,7 +190,9 @@ import perplexity_async
 
 async def test():
     labs_cli = await perplexity_async.LabsClient()
-    print(await labs_cli.ask('hi'))
+
+    # model = ['pplx-7b-chat-alpha', 'pplx-70b-chat-alpha', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-13b-chat', 'llama-2-70b-chat']
+    print(await labs_cli.ask('hi', model='pplx-7b-chat-alpha'))
 
 asyncio.run(test())
 ```
