@@ -53,15 +53,18 @@ class Emailnator:
             self.inbox_ads.append(ads['messageID'])
 
     # reload inbox messages
-    def reload(self, wait=False, retry_timeout=1):
+    def reload(self, wait=False, retry_timeout=1, max_retry=10):
         self.new_msgs = []
+        retry_count = 0
 
         while True:
             for msg in self.s.post('https://www.emailnator.com/message-list', json={'email': self.email}).json()['messageData']:
                 if msg['messageID'] not in self.inbox_ads and msg not in self.inbox:
                     self.new_msgs.append(msg)
 
-            if wait and not self.new_msgs:
+            retry_count += 1
+
+            if wait and retry_count < max_retry and not self.new_msgs:
                 time.sleep(retry_timeout)
             else:
                 break
@@ -112,50 +115,59 @@ class Client:
 
     # method to create an account on the webpage
     def create_account(self, headers, cookies):
-        emailnator_cli = Emailnator(headers, cookies, dot=False, google_mail=True)
+        while True:
+            emailnator_cli = Emailnator(headers, cookies, dot=False, google_mail=True)
 
-        # send sign in link to email
-        resp = self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
-            'email': emailnator_cli.email,
-            'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
-            'callbackUrl': 'https://www.perplexity.ai/',
-            'json': 'true',
-        })
+            # send sign in link to email
+            resp = self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
+                'email': emailnator_cli.email,
+                'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
+                'callbackUrl': 'https://www.perplexity.ai/',
+                'json': 'true',
+            })
 
-        if resp.ok:
-            # get the link from mail and open, you will be signed in directly when you open link
-            new_msgs = emailnator_cli.reload(wait=True)
-            new_account_link = souper(emailnator_cli.open(new_msgs[0]['messageID'])).select('a')[1].get('href')
+            if resp.ok:
+                # get the link from mail and open, you will be signed in directly when you open link
+                new_msgs = emailnator_cli.reload(wait=True)
 
-            self.session.get(new_account_link)
-            self.session.get('https://www.perplexity.ai/')
+                # sometimes mails from emailnator doesn't work properly and it causes a loop here, we will pass and create a new one if it is
+                if new_msgs:
+                    break
 
-            self.copilot = 5
-            self.file_upload = 3
+            else:
+                raise Exception('Account creating error', self.resp, self.resp.text)
 
-            self.ws.close()
+        new_account_link = souper(emailnator_cli.open(new_msgs[0]['messageID'])).select('a')[1].get('href')
 
-            # generate random values for session init
-            self.t = format(random.getrandbits(32), '08x')
-            self.sid = json.loads(self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}').text[1:])['sid']
+        self.session.get(new_account_link)
+        self.session.get('https://www.perplexity.ai/')
 
-            assert self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
+        self.copilot = 5
+        self.file_upload = 3
 
-            # reconfig - WebSocket communication
-            self.ws = WebSocketApp(
-                url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
-                cookie='; '.join([f'{x}={y}' for x, y in self.session.cookies.get_dict().items()]),
-                header={'User-Agent': self.session.headers['User-Agent']},
-                on_open=lambda ws: ws.send('2probe'),
-                on_message=self.on_message,
-                on_error=lambda ws, err: print(f'Error: {err}'),
-            )
+        self.ws.close()
 
-            # start WebSocket thread
-            Thread(target=self.ws.run_forever).start()
-            time.sleep(1)
+        # generate random values for session init
+        self.t = format(random.getrandbits(32), '08x')
+        self.sid = json.loads(self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}').text[1:])['sid']
 
-            return True
+        assert self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
+
+        # reconfig - WebSocket communication
+        self.ws = WebSocketApp(
+            url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
+            cookie='; '.join([f'{x}={y}' for x, y in self.session.cookies.get_dict().items()]),
+            header={'User-Agent': self.session.headers['User-Agent']},
+            on_open=lambda ws: ws.send('2probe'),
+            on_message=self.on_message,
+            on_error=lambda ws, err: print(f'Error: {err}'),
+        )
+
+        # start WebSocket thread
+        Thread(target=self.ws.run_forever).start()
+        time.sleep(1)
+
+        return True
 
     # message handler function for Websocket
     def on_message(self, ws, message):
