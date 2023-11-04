@@ -1,10 +1,10 @@
 # Perplexity.ai
 This module is simply just an API Wrapper and account generator. It serves as an API wrapper with free copilots.
 
-# How It Works
+## How It Works
 This module uses [emailnator](https://emailnator.com/) to generate new accounts. As you know, when you create a new account, you will have 5 copilots. That's how it works! This module will generate you new gmails (using @googlemail.com right now) with [emailnator](https://emailnator.com/) and you will have **UNLIMITED COPILOTS!**
 
-# Requirements
+## Requirements
 
 <details>
 <summary>Click to expand</summary>
@@ -38,7 +38,7 @@ pip3 install aiohttp
 
 
 
-# How To Use
+## How To Use
 First thing first, [Perplexity.ai](https://perplexity.ai/) is protected by cloudflare, and [emailnator](https://emailnator.com/) too. We need to open this pages manually and get the cookies. Do not forget these cookies are temporary, so you need to renew them continuously. [Here](#how-to-get-the-cookies) how to get your cookies.
 
 ```python3
@@ -115,9 +115,58 @@ print(labs_cli.ask('hi', model='pplx-7b-chat-alpha'))
 
 </details>
 
+
+<details>
+<summary><h2>Pool</h2></summary>
+<br>
+If you don't want to wait while creating account, then pool is what you're looking for. It will simply work on background and create accounts when your current copilot & file upload count is lower than the limit.
+
+```python3
+import perplexity
+
+perplexity_headers = {
+    <your headers here>
+}
+
+perplexity_cookies = { 
+    <your cookies here>
+}
+
+emailnator_headers = { 
+    <your headers here>
+}
+
+emailnator_cookies = { 
+    <your cookies here>
+}
+
+
+def my_text_prompt_solver(query):
+    return input(f'{query}: ')
+
+def my_checkbox_prompt_solver(description, options):
+    print(description + '\n' + '\n'.join([str(x) + ' - ' + options[x] for x in options]))
+    return [int(input('--> '))]
+
+# copilots = minimum needed copilot count, when current copilot count is lower than this, a new account will be created in the background
+# file_uploads = minimum needed file upload count, when current file upload count is lower than this, a new account will be created in the background
+# threads = how many accounts will be created in the background at the same time, if you're not going to use 50+ copilots in a minute, don't increase this
+pool = perplexity.Pool(perplexity_headers, perplexity_cookies, emailnator_headers, emailnator_cookies, copilots=10, file_uploads=5, threads=1)
+
+# everything is same
+resp = pool.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], solvers={
+    'text': my_text_prompt_solver,
+    'checkbox': my_checkbox_prompt_solver
+    })
+print(resp)
+```
+
+</details>
+
+
 <br>
 
-# Asynchronous Version
+## Asynchronous Version
 
 ```python3
 import perplexity_async
@@ -202,7 +251,7 @@ asyncio.run(test())
 <br>
 
 
-# How To Get The Cookies
+## How To Get The Cookies
 Do not forget these cookies are temporary, so you need to renew them continuously.
 
 1. Open [emailnator](https://emailnator.com/) website. Click F12 or Ctrl+Shift+I to open inspector. Go to the "Network" tab in the inspector, check "Preserve log" button, click the "Go !" button in the website, right click the "message-list" in the Network Tab and hover on "Copy" and click to "Copy as cURL (bash)". Now go to the [curlconverter](https://curlconverter.com/python/), paste your code here. The header and cookies dictionary will appear, copy and use them in your codes.
