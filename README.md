@@ -120,7 +120,7 @@ print(labs_cli.ask('hi', model='pplx-7b-chat-alpha'))
 <summary><h2>Pool</h2></summary>
 <br>
 If you don't want to wait while creating account, then pool is what you're looking for. It will simply work on background and create accounts when your current copilot & file upload count is lower than the limit.
-
+<br>
 <br>
 
 ```python3
