@@ -473,7 +473,7 @@ class LabsClient(AsyncMixin):
 
     # method to ask to perplexity labs
     async def ask(self, query, model='pplx-7b-online'):
-        assert model in ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat-alpha', 'pplx-70b-chat-alpha', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-13b-chat', 'llama-2-70b-chat'], 'Search modes --> ["pplx-7b-online", "pplx-70b-online", "pplx-7b-chat-alpha", "pplx-70b-chat-alpha", "mistral-7b-instruct", "codellama-34b-instruct", "llama-2-13b-chat", "llama-2-70b-chat"]'
+        assert model in ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b'], 'Search modes --> ["pplx-7b-online", "pplx-70b-online", "pplx-7b-chat", "pplx-70b-chat", "mistral-7b-instruct", "codellama-34b-instruct", "llama-2-70b-chat", "llava-7b-chat", "mixtral-8x7b"]'
 
         self._last_answer = None
         self.history.append({'role': 'user', 'content': query, 'priority': 0})
