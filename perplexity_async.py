@@ -503,7 +503,7 @@ class LabsClient(AsyncMixin):
 
         return self._last_answer
 
-    def add_custom_message(self, content, role="system"):
+    def add_custom_message(self, content, role='assistant'):
         self.history.append({'role': role, 'content': content, 'priority': 0})
 
     def clear_history(self):
