@@ -102,7 +102,6 @@ print(resp2)
 
 <details>
 <summary><h2>Labs</h2></summary>
-<br>
 
 Open the [Labs](https://labs.perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
 <br>
@@ -137,7 +136,7 @@ labs_cli.clear_history()
 
 <details>
 <summary><h2>Pool</h2></summary>
-<br>
+
 If you don't want to wait while creating account, then pool is what you're looking for. It will simply work on background and create accounts when your current copilot & file upload count is lower than the limit.
 <br>
 <br>
@@ -253,7 +252,6 @@ asyncio.run(test())
 
 <details>
 <summary><h2>Asynchronous Labs</h2></summary>
-<br>
 
 Open the [Labs](https://labs.perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
 <br>
