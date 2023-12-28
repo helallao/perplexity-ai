@@ -253,15 +253,33 @@ asyncio.run(test())
 <details>
 <summary><h2>Asynchronous Labs</h2></summary>
 <br>
+Open the [Labs](https://labs.perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
+<br>
+<br>
 
 ```python3
 import perplexity_async
 
+labs_headers = {
+    <your headers here>
+}
+
+labs_cookies = { 
+    <your cookies here>
+}
+
 async def test():
-    labs_cli = await perplexity_async.LabsClient()
+    labs_cli = await perplexity_async.LabsClient(labs_headers, labs_cookies)
 
     # model = ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b-instruct', 'mistral-medium']
     print(await labs_cli.ask('hi', model='pplx-7b-online'))
+
+    # this function adds a custom message to conversation
+    # role = ['user', 'assistant']
+    labs_cli.add_custom_message('msg', role='assistant')
+
+    # this function resets the conversation
+    labs_cli.clear_history()
 
 asyncio.run(test())
 ```
