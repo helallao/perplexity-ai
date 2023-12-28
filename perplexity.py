@@ -401,7 +401,6 @@ class LabsClient:
         self.session = requests.Session()
         self.session.headers.update(case_fixer(headers))
         self.session.cookies.update(cookies)
-        self.session.get('https://labs-api.perplexity.ai/')
 
         # generate random values for session init
         self.t = format(random.getrandbits(32), '08x')
@@ -473,7 +472,7 @@ class LabsClient:
 
         return self._last_answer
 
-    def add_custom_message(self, content, role="system"):
+    def add_custom_message(self, content, role='assistant'):
         self.history.append({'role': role, 'content': content, 'priority': 0})
 
     def clear_history(self):
