@@ -397,17 +397,15 @@ class Client:
 
 # client class for interactions with perplexity ai labs webpage
 class LabsClient:
-    def __init__(self,headers, cookies):
+    def __init__(self, headers, cookies):
         self.session = requests.Session()
         self.session.headers.update(case_fixer(headers))
         self.session.cookies.update(cookies)
-        #self.session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'})
         self.session.get('https://labs-api.perplexity.ai/')
 
         # generate random values for session init
         self.t = format(random.getrandbits(32), '08x')
-        _sid = self.session.get(f'https://labs-api.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}').text[1:]
-        self.sid = json.loads(_sid)['sid']
+        self.sid = json.loads(self.session.get(f'https://labs-api.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}').text[1:])['sid']
         self._last_answer = None
         self.history = []
 
@@ -467,22 +465,22 @@ class LabsClient:
                     'mistral-medium': 'mistral-medium'}[model],
                 'messages': self.history
             }
-        ]))  
+        ]))
 
 
-        while not self._last_answer:  
+        while not self._last_answer:
             pass
 
-        return self._last_answer  
-    
-    def add_custom_message(self,content,role="system"):
+        return self._last_answer
+
+    def add_custom_message(self, content, role="system"):
         self.history.append({'role': role, 'content': content, 'priority': 0})
-    
-    def clear_history(self):  
-        self.history.clear()  
+
+    def clear_history(self):
+        self.history.clear()
 
 
-class Pool:  
+class Pool:
     def __init__(self, perplexity_headers, perplexity_cookies, emailnator_headers, emailnator_cookies, copilots=10, file_uploads=5, threads=1):
         self.perplexity_headers = perplexity_headers
         self.perplexity_cookies = perplexity_cookies
@@ -490,7 +488,7 @@ class Pool:  
         self.emailnator_headers = emailnator_headers
         self.emailnator_cookies = emailnator_cookies
 
-        self.copilots = copilots  
+        self.copilots = copilots
         self.file_uploads = file_uploads
         self.accounts = []
 
