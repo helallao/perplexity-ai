@@ -103,6 +103,7 @@ print(resp2)
 <details>
 <summary><h2>Labs</h2></summary>
 <br>
+
 Open the [Labs](https://labs.perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
 <br>
 <br>
@@ -253,6 +254,7 @@ asyncio.run(test())
 <details>
 <summary><h2>Asynchronous Labs</h2></summary>
 <br>
+
 Open the [Labs](https://labs.perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
 <br>
 <br>
