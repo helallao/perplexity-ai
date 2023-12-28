@@ -430,9 +430,8 @@ class Client(AsyncMixin):
 
 # client class for interactions with perplexity ai labs webpage
 class LabsClient(AsyncMixin):
-    async def __ainit__(self):
-        self.session = aiohttp.ClientSession(headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'})
-        await self.session.get('https://labs-api.perplexity.ai/')
+    async def __ainit__(self, headers, cookies):
+        self.session = aiohttp.ClientSession(headers=case_fixer(headers), cookies=cookies)
 
         # generate random values for session init
         self.t = format(random.getrandbits(32), '08x')
@@ -503,3 +502,9 @@ class LabsClient(AsyncMixin):
             await asyncio.sleep(0.01)
 
         return self._last_answer
+
+    def add_custom_message(self, content, role="system"):
+        self.history.append({'role': role, 'content': content, 'priority': 0})
+
+    def clear_history(self):
+        self.history.clear()
