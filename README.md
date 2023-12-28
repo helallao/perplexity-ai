@@ -103,14 +103,32 @@ print(resp2)
 <details>
 <summary><h2>Labs</h2></summary>
 <br>
+Open the [Labs](https://labs.perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
+<br>
+<br>
 
 ```python3
 import perplexity
 
-labs_cli = perplexity.LabsClient()
+labs_headers = {
+    <your headers here>
+}
+
+labs_cookies = { 
+    <your cookies here>
+}
+
+labs_cli = perplexity.LabsClient(labs_headers, labs_cookies)
 
 # model = ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b-instruct', 'mistral-medium']
 print(labs_cli.ask('hi', model='pplx-7b-online'))
+
+# this function adds a custom message to conversation
+# role = ['user', 'assistant']
+labs_cli.add_custom_message('msg', role='assistant')
+
+# this function resets the conversation
+labs_cli.clear_history()
 ```
 
 </details>
@@ -271,4 +289,4 @@ Do not forget these cookies are temporary, so you need to renew them continuousl
 
 # Thanks To
 * [perplexityai](https://github.com/nathanrchn/perplexityai) by [nathanrchn](https://github.com/nathanrchn)
-* [dominicOT](https://github.com/dominicOT) and [Kerry1207](https://github.com/Kerry1207) for their contributions
+* [dominicOT](https://github.com/dominicOT), [Kerry1207](https://github.com/Kerry1207) and [drimeF0](https://github.com/drimeF0) for their contributions
