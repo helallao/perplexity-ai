@@ -61,7 +61,8 @@ emailnator_cookies = {
 }
 
 
-perplexity_cli = perplexity.Client(perplexity_headers, perplexity_cookies)
+# If you're going to use your own account, login to your account and copy headers/cookies (reload the page). Set "own" as True, and do not call "create_account" function. This will deactivate copilot and file upload limit controls
+perplexity_cli = perplexity.Client(perplexity_headers, perplexity_cookies, own=False)
 perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 copilots will be renewed. You can pass this one if you are not going to use "copilot" mode
 
 
@@ -80,8 +81,9 @@ def my_checkbox_prompt_solver(description, options):
 # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit']
 # files = file list, each element of list is tuple like this: (data, filetype) perplexity supports two file types, txt and pdf
 # follow_up = last query info for follow-up queries, you can directly pass response json from a query, look at second example below.
+# ai_model = ['default', 'experimental', 'gpt-4', 'claude-2.1', 'gemini pro'] only works for own=True clients (perplexity.Client(..., own=True))
 # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
-resp = perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], solvers={
+resp = perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], ai_model='default', solvers={
     'text': my_text_prompt_solver,
     'checkbox': my_checkbox_prompt_solver
     })
@@ -221,15 +223,17 @@ async def my_checkbox_prompt_solver(description, options):
 
 
 async def test():
-    perplexity_cli = await perplexity_async.Client(perplexity_headers, perplexity_cookies)
+    # If you're going to use your own account, login to your account and copy headers/cookies (reload the page). Set "own" as True, and do not call "create_account" function. This will deactivate copilot and file upload limit controls
+    perplexity_cli = await perplexity_async.Client(perplexity_headers, perplexity_cookies, own=False)
     await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 copilots will be renewed. You can pass this one if you are not going to use "copilot" mode
 
     # modes = ['concise', 'copilot']
     # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit']
     # files = file list, each element of list is tuple like this: (data, filetype) perplexity supports two file types, txt and pdf
+    # ai_model = ['default', 'experimental', 'gpt-4', 'claude-2.1', 'gemini pro'] only works for own=True clients (perplexity_async.Client(..., own=True))
     # follow_up = last query info for follow-up queries, you can directly pass response json from a query, look at second example below.
     # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
-    resp = await perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], solvers={
+    resp = await perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], ai_model='default', solvers={
         'text': my_text_prompt_solver,
         'checkbox': my_checkbox_prompt_solver
     })
