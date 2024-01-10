@@ -79,7 +79,7 @@ class Emailnator:
 
 # client class for interactions with perplexity ai webpage
 class Client:
-    def __init__(self, headers, cookies):
+    def __init__(self, headers, cookies, own=False):
         self.session = requests.Session()
         self.session.headers.update(case_fixer(headers))
         self.session.cookies.update(cookies)
@@ -91,8 +91,9 @@ class Client:
         self.frontend_session_id = str(uuid4())
         self._last_answer = None
         self._last_file_upload_info = None
-        self.copilot = 0
-        self.file_upload = 0
+        self.own = own
+        self.copilot = 0 if not own else float('inf')
+        self.file_upload = 0 if not own else float('inf')
         self.n = 1
 
 
@@ -189,9 +190,10 @@ class Client:
                 self._last_file_upload_info = response
 
     # method to search on the webpage
-    def search(self, query, mode='concise', focus='internet', files=[], follow_up=None, solvers={}):
+    def search(self, query, mode='concise', focus='internet', files=[], follow_up=None, solvers={}, ai_model='default'):
         assert mode in ['concise', 'copilot'], 'Search modes --> ["concise", "copilot"]'
         assert focus in ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit'], 'Search focus modes --> ["internet", "scholar", "writing", "wolfram", "youtube", "reddit"]'
+        assert ai_model in ['default', 'experimental', 'gpt-4', 'claude-2.1', 'gemini pro'], 'Ai models --> ["default", "experimental", "gpt-4", "claude-2.1", "gemini pro"]'
         assert self.copilot > 0 if mode == 'copilot' else True, 'You have used all of your copilots'
         assert self.file_upload - len(files) >= 0 if files else True, f'You have tried to upload {len(files)} files but you have {self.file_upload} file upload(s) remaining.'
 
@@ -200,6 +202,23 @@ class Client:
         self.n += 1
         self._last_answer = None
         self._last_file_upload_info = None
+
+        # set ai model
+        if self.own:
+            self.ws.send(f'{420 + self.n}' + json.dumps([
+                'save_user_settings',
+                {
+                    'version': '2.1',
+                    'source': 'default',
+                    'default_model': {
+                        'default': 'turbo',
+                        'experimental': 'experimental',
+                        'gpt-4': 'gpt4',
+                        'claude-2.1': 'claude2',
+                        'gemini pro': 'gemini'}[ai_model]
+                }
+            ]))
+            self.n += 1
 
 
         if files:
