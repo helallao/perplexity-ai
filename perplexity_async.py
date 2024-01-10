@@ -107,7 +107,7 @@ class Emailnator(AsyncMixin):
 
 # client class for interactions with perplexity ai webpage
 class Client(AsyncMixin):
-    async def __ainit__(self, headers, cookies):
+    async def __ainit__(self, headers, cookies, own=False):
         self.session = aiohttp.ClientSession(headers=case_fixer(headers), cookies=cookies)
 
         # generate random values for session init
@@ -117,8 +117,9 @@ class Client(AsyncMixin):
         self.frontend_session_id = str(uuid4())
         self._last_answer = None
         self._last_file_upload_info = None
-        self.copilot = 0
-        self.file_upload = 0
+        self.own = own
+        self.copilot = 0 if not own else float('inf')
+        self.file_upload = 0 if not own else float('inf')
         self.n = 1
 
         assert (await (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.t}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text()) == 'OK'
@@ -217,9 +218,10 @@ class Client(AsyncMixin):
                 self._last_file_upload_info = response
 
     # method to search on the webpage
-    async def search(self, query, mode='concise', focus='internet', files=[], follow_up=None, solvers={}):
+    async def search(self, query, mode='concise', focus='internet', files=[], follow_up=None, solvers={}, ai_model='default'):
         assert mode in ['concise', 'copilot'], 'Search modes --> ["concise", "copilot"]'
         assert focus in ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit'], 'Search focus modes --> ["internet", "scholar", "writing", "wolfram", "youtube", "reddit"]'
+        assert ai_model in ['default', 'experimental', 'gpt-4', 'claude-2.1', 'gemini pro'], 'Ai models --> ["default", "experimental", "gpt-4", "claude-2.1", "gemini pro"]'
         assert self.copilot > 0 if mode == 'copilot' else True, 'You have used all of your copilots'
         assert self.file_upload - len(files) >= 0 if files else True, f'You have tried to upload {len(files)} files but you have {self.file_upload} file upload(s) remaining.'
 
@@ -228,6 +230,24 @@ class Client(AsyncMixin):
         self.n += 1
         self._last_answer = None
         self._last_file_upload_info = None
+
+
+        # set ai model
+        if self.own:
+            self.ws.send(f'{420 + self.n}' + json.dumps([
+                'save_user_settings',
+                {
+                    'version': '2.1',
+                    'source': 'default',
+                    'default_model': {
+                        'default': 'turbo',
+                        'experimental': 'experimental',
+                        'gpt-4': 'gpt4',
+                        'claude-2.1': 'claude2',
+                        'gemini pro': 'gemini'}[ai_model]
+                }
+            ]))
+            self.n += 1
 
 
         if files:
