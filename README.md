@@ -12,8 +12,6 @@ This module uses [emailnator](https://emailnator.com/) to generate new accounts.
 
 * [requests](https://pypi.org/project/requests/)
 * [requests-toolbelt](https://pypi.org/project/requests-toolbelt/)
-* [beautifulsoup4](https://pypi.org/project/beautifulsoup4/)
-* [lxml](https://pypi.org/project/lxml/) (Parser for BeautifulSoup)
 * [websocket-client](https://pypi.org/project/websocket-client/)
 * [aiohttp](https://pypi.org/project/aiohttp/) (if you are going to use asynchronous version)
 
@@ -25,7 +23,7 @@ pip3 install -r requirements.txt
 
 or with single-line command:
 ```sh
-pip3 install requests&&pip3 install beautifulsoup4&&pip3 install lxml&&pip3 install websocket-client&&pip3 install requests-toolbelt
+pip3 install requests&&pip3 install websocket-client&&pip3 install requests-toolbelt
 ```
 
 and aiohttp if you are going to use asynchronous version:
