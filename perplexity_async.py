@@ -8,7 +8,7 @@ from uuid import uuid4
 from threading import Thread
 
 # regex for extracting sign in link from mail sent by perplexity
-signin_regex = re.compile(f'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
+signin_regex = re.compile(r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
 
 # utility function for converting aiohttp cookie_jar to dict
 def cookiejar_to_dict(cookie_jar):
