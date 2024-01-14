@@ -2,15 +2,14 @@ import json
 import time
 import requests
 import random
+import re
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
-from bs4 import BeautifulSoup
 from websocket import WebSocketApp
 from uuid import uuid4
 from threading import Thread
 
-# utility function for parsing HTML content - using BeautifulSoup, lxml parser
-def souper(x):
-    return BeautifulSoup(x, 'lxml')
+# regex for extracting sign in link from mail sent by perplexity
+signin_regex = re.compile(f'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
 
 # utility function for case-sensitive header names, to convert lower case header names to upper case taken from curlconverter.com
 def case_fixer(headers):
@@ -141,7 +140,7 @@ class Client:
                 pass
 
         # open the link received from mail, you will be signed in directly when you open link
-        new_account_link = souper(emailnator_cli.open(new_msgs[0]['messageID'])).select('a')[1].get('href')
+        new_account_link = signin_regex.search(emailnator_cli.open(new_msgs[0]['messageID'])).group(1)
 
         self.session.get(new_account_link)
         self.session.get('https://www.perplexity.ai/')
