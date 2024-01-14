@@ -9,7 +9,7 @@ from uuid import uuid4
 from threading import Thread
 
 # regex for extracting sign in link from mail sent by perplexity
-signin_regex = re.compile(f'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
+signin_regex = re.compile(r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
 
 # utility function for case-sensitive header names, to convert lower case header names to upper case taken from curlconverter.com
 def case_fixer(headers):
