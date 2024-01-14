@@ -2,14 +2,13 @@ import asyncio
 import json
 import aiohttp
 import random
-from bs4 import BeautifulSoup
+import re
 from websocket import WebSocketApp
 from uuid import uuid4
 from threading import Thread
 
-# utility function for parsing HTML content - using BeautifulSoup, lxml parser
-def souper(x):
-    return BeautifulSoup(x, 'lxml')
+# regex for extracting sign in link from mail sent by perplexity
+signin_regex = re.compile(f'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
 
 # utility function for converting aiohttp cookie_jar to dict
 def cookiejar_to_dict(cookie_jar):
@@ -166,7 +165,7 @@ class Client(AsyncMixin):
                 pass
 
         # open the link received from mail, you will be signed in directly when you open link
-        new_account_link = souper(await emailnator_cli.open(new_msgs[0]['messageID'])).select('a')[1].get('href')
+        new_account_link = signin_regex.search(await emailnator_cli.open(new_msgs[0]['messageID'])).group(1)
         await emailnator_cli.s.close()
 
         await self.session.get(new_account_link)
