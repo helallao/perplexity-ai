@@ -120,7 +120,7 @@ labs_cookies = {
 
 labs_cli = perplexity.LabsClient(labs_headers, labs_cookies)
 
-# model = ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b-instruct', 'mistral-medium']
+# model = ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b-instruct', 'mistral-medium', 'related']
 print(labs_cli.ask('hi', model='pplx-7b-online'))
 
 # this function adds a custom message to conversation
@@ -273,7 +273,7 @@ labs_cookies = {
 async def test():
     labs_cli = await perplexity_async.LabsClient(labs_headers, labs_cookies)
 
-    # model = ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b-instruct', 'mistral-medium']
+    # model = ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b-instruct', 'mistral-medium', 'related']
     print(await labs_cli.ask('hi', model='pplx-7b-online'))
 
     # this function adds a custom message to conversation
