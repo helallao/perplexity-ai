@@ -236,7 +236,7 @@ class Client(AsyncMixin):
             self.ws.send(f'{420 + self.n}' + json.dumps([
                 'save_user_settings',
                 {
-                    'version': '2.1',
+                    'version': '2.2',
                     'source': 'default',
                     'default_model': {
                         'default': 'turbo',
@@ -260,7 +260,7 @@ class Client(AsyncMixin):
                 self.ws.send(f'{420 + self.n}' + json.dumps([
                     'get_upload_url',
                     {
-                        'version': '2.1',
+                        'version': '2.2',
                         'source': 'default',
                         'content_type': {'txt': 'text/plain', 'pdf': 'application/pdf'}[file[1]]
                     }
@@ -296,7 +296,7 @@ class Client(AsyncMixin):
                 query,
                 {
                     'attachments': uploaded_files,
-                    'version': '2.1',
+                    'version': '2.2',
                     'source': 'default',
                     'mode': mode,
                     'last_backend_uuid': None,
@@ -317,7 +317,7 @@ class Client(AsyncMixin):
                 query,
                 {
                     'attachments': follow_up['attachments'] if follow_up else None,
-                    'version': '2.1',
+                    'version': '2.2',
                     'source': 'default',
                     'mode': mode,
                     'last_backend_uuid': follow_up['backend_uuid'] if follow_up else None,
@@ -355,7 +355,7 @@ class Client(AsyncMixin):
                                 'perplexity_step',
                                 query,
                                 {
-                                    'version': '2.1',
+                                    'version': '2.2',
                                     'source': 'default',
                                     'attachments': self._last_answer['attachments'],
                                     'last_backend_uuid': self.backend_uuid,
@@ -377,7 +377,7 @@ class Client(AsyncMixin):
                                 'perplexity_step',
                                 query,
                                 {
-                                    'version': '2.1',
+                                    'version': '2.2',
                                     'source': 'default',
                                     'attachments': self._last_answer['attachments'],
                                     'last_backend_uuid': self.backend_uuid,
@@ -405,7 +405,7 @@ class Client(AsyncMixin):
                                 'perplexity_step',
                                 query,
                                 {
-                                    'version': '2.1',
+                                    'version': '2.2',
                                     'source': 'default',
                                     'attachments': self._last_answer['attachments'],
                                     'last_backend_uuid': self.backend_uuid,
@@ -427,7 +427,7 @@ class Client(AsyncMixin):
                                 'perplexity_step',
                                 query,
                                 {
-                                    'version': '2.1',
+                                    'version': '2.2',
                                     'source': 'default',
                                     'attachments': self._last_answer['attachments'],
                                     'last_backend_uuid': self.backend_uuid,
@@ -499,7 +499,7 @@ class LabsClient(AsyncMixin):
         self.ws.send('42' + json.dumps([
             'perplexity_playground',
             {
-                'version': '2.1',
+                'version': '2.2',
                 'source': 'default',
                 'model': {
                     'pplx-7b-online': 'pplx-7b-online',
