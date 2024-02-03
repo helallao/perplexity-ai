@@ -1,3 +1,10 @@
+# Important Note 02/03/2024
+**EVERYONE** military service mandatory in Turkey and im a Turk, so im going to go to military soon and this repository will not be updated anymore. I'm leaving this repository to community, andbody who wants to use it and capable to update or fix codes can open a pull request (as an update) and others can use these pull requests.
+
+<br>
+<br>
+<br>
+
 # Perplexity.ai
 This module is simply just an API Wrapper and account generator. It serves as an API wrapper with free copilots.
 
