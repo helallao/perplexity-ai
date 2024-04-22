@@ -522,8 +522,8 @@ class Pool:
             current_file_uploads = sum([x.file_upload for x in self.accounts if x.copilot and x.file_upload])
 
             if not self.accounts or current_copilots < self.copilots or current_file_uploads < self.file_uploads:
-                new_account = Client(perplexity_headers, perplexity_cookies)
-                new_account.create_account(emailnator_headers, emailnator_cookies)
+                new_account = Client(self.perplexity_headers, self.perplexity_cookies)
+                new_account.create_account(self.emailnator_headers, self.emailnator_cookies)
 
                 self.accounts.append(new_account)
 
