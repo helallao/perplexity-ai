@@ -1,10 +1,3 @@
-# Important Note 02/03/2024
-**EVERYONE**, military service is mandatory in Turkey and im a Turk, so im going to go to military soon and this repository will not be updated anymore. I'm leaving this repository to community, andbody who wants to use it and capable to update or fix codes can open a pull request (as an update) and others can use these pull requests.
-
-<br>
-<br>
-<br>
-
 # Perplexity.ai
 This module is simply just an API Wrapper and account generator. It serves as an API wrapper with free copilots.
 
@@ -83,8 +76,8 @@ def my_checkbox_prompt_solver(description, options):
 
 
 # modes = ['concise', 'copilot']
-# focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit']
-# files = file list, each element of list is tuple like this: (data, filetype) perplexity supports two file types, txt and pdf
+# focus = ['internet', 'scholar', 'wolfram', 'writing', 'youtube', 'reddit']
+# files = file list, each element of list is tuple like this: (data, filename)
 # follow_up = last query info for follow-up queries, you can directly pass response json from a query, look at second example below.
 # ai_model = ['default', 'experimental', 'gpt-4', 'claude-2.1', 'gemini pro'] only works for own=True clients (perplexity.Client(..., own=True))
 # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
@@ -110,7 +103,7 @@ print(resp2)
 <details>
 <summary><h2>Labs</h2></summary>
 
-Open the [Labs](https://labs.perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
+Open the [Perplexity.ai](https://perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
 <br>
 <br>
 
@@ -127,8 +120,8 @@ labs_cookies = {
 
 labs_cli = perplexity.LabsClient(labs_headers, labs_cookies)
 
-# model = ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'codellama-70b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b-instruct', 'mistral-medium', 'related']
-print(labs_cli.ask('hi', model='pplx-7b-online'))
+# model = ['llama-3.1-sonar-large-128k-online', 'llama-3.1-sonar-small-128k-online', 'llama-3.1-sonar-large-128k-chat', 'llama-3.1-sonar-small-128k-chat', 'llama-3.1-8b-instruct', 'llama-3.1-70b-instruct', 'Liquid LFM 40B']
+print(labs_cli.ask('hi', model='llama-3.1-sonar-large-128k-online'))
 
 # this function adds a custom message to conversation
 # role = ['user', 'assistant']
@@ -178,7 +171,7 @@ def my_checkbox_prompt_solver(description, options):
 # copilots = minimum needed copilot count, when current copilot count is lower than this, a new account will be created in the background
 # file_uploads = minimum needed file upload count, when current file upload count is lower than this, a new account will be created in the background
 # threads = how many accounts will be created in the background at the same time, if you're not going to use 50+ copilots in a minute, don't increase this
-pool = perplexity.Pool(perplexity_headers, perplexity_cookies, emailnator_headers, emailnator_cookies, copilots=10, file_uploads=5, threads=1)
+pool = perplexity.Pool(perplexity_headers, perplexity_cookies, emailnator_headers, emailnator_cookies, copilots=10, file_uploads=10, threads=1)
 
 # everything is same
 resp = pool.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], solvers={
