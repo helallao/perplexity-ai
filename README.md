@@ -79,7 +79,7 @@ def my_checkbox_prompt_solver(description, options):
 # focus = ['internet', 'scholar', 'wolfram', 'writing', 'youtube', 'reddit']
 # files = file list, each element of list is tuple like this: (data, filename)
 # follow_up = last query info for follow-up queries, you can directly pass response json from a query, look at second example below.
-# ai_model = ['default', 'experimental', 'gpt-4', 'claude-2.1', 'gemini pro'] only works for own=True clients (perplexity.Client(..., own=True))
+# ai_model = ['default', 'claude 3.5 sonnet', 'sonar large', 'gpt-4o', 'sonar huge', 'grok-2', 'claude 3.5 haiku'] only works for own=True clients (perplexity.Client(..., own=True))
 # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
 resp = perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], ai_model='default', solvers={
     'text': my_text_prompt_solver,
@@ -229,7 +229,7 @@ async def test():
     # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit']
     # files = file list, each element of list is tuple like this: (data, filetype) perplexity supports two file types, txt and pdf
     # follow_up = last query info for follow-up queries, you can directly pass response json from a query, look at second example below.
-    # ai_model = ['default', 'experimental', 'gpt-4', 'claude-2.1', 'gemini pro'] only works for own=True clients (perplexity_async.Client(..., own=True))
+    # ai_model = ['default', 'claude 3.5 sonnet', 'sonar large', 'gpt-4o', 'sonar huge', 'grok-2', 'claude 3.5 haiku'] only works for own=True clients (perplexity_async.Client(..., own=True))
     # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
     resp = await perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], ai_model='default', solvers={
         'text': my_text_prompt_solver,
