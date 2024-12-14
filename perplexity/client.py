@@ -137,7 +137,7 @@ class Client:
     def search(self, query, mode='concise', focus='internet', files=[], follow_up=None, solvers={}, ai_model='default'):
         assert mode in ['concise', 'copilot'], 'Search modes --> ["concise", "copilot"]'
         assert focus in ['internet', 'scholar', 'wolfram', 'writing', 'youtube', 'reddit'], 'Search focus modes --> ["internet", "scholar", "wolfram", "writing", "youtube", "reddit"]'
-        assert ai_model in ['default', 'experimental', 'gpt-4', 'claude-2.1', 'gemini pro'], 'Ai models --> ["default", "experimental", "gpt-4", "claude-2.1", "gemini pro"]'
+        assert ai_model in ['default', 'claude 3.5 sonnet', 'sonar large', 'gpt-4o', 'sonar huge', 'grok-2', 'claude 3.5 haiku'], 'Ai models --> ["default", "claude 3.5 sonnet", "sonar large", "gpt-4o", "sonar huge", "grok-2", "claude 3.5 haiku"]'
         assert self.copilot > 0 if mode == 'copilot' else True, 'You have used all of your copilots'
         assert self.file_upload - len(files) >= 0 if files else True, f'You have tried to upload {len(files)} files but you have {self.file_upload} file upload(s) remaining.'
 
@@ -149,20 +149,18 @@ class Client:
 
         # set ai model
         if self.own:
-            self.ws.send(f'{420 + self.n}' + json.dumps([
-                'save_user_settings',
-                {
-                    'version': '2.13',
-                    'source': 'default',
+            resp = requests.put('https://www.perplexity.ai/rest/user/save-settings?version=2.15&source=default', json={
+                'updated_settings': {
                     'default_model': {
                         'default': 'turbo',
-                        'experimental': 'experimental',
-                        'gpt-4': 'gpt4',
-                        'claude-2.1': 'claude2',
-                        'gemini pro': 'gemini'}[ai_model]
-                }
-            ]))
-            self.n += 1
+                        'claude 3.5 sonnet': 'claude2',
+                        'sonar large': 'experimental',
+                        'gpt-4o': 'gpt4o',
+                        'sonar huge': 'llama_x_large',
+                        'grok-2': 'grok',
+                        'claude 3.5 haiku': 'claude35haiku'}[ai_model],
+                },
+            }, headers={'user-agent': self.session.headers['user-agent']}, cookies=self.session.cookies)
 
 
         if files:
