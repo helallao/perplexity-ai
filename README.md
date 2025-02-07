@@ -53,6 +53,8 @@ cli = Driver()
 cli.run(rf'C:\Users\{os.getlogin()}\AppData\Local\Google\Chrome\User Data')
 ```
 
+https://github.com/user-attachments/assets/6862a53c-d574-4229-a203-0a47bba4af60
+
 You can use your own chrome instance for Web Interface too. To do this, you need to add ``--remote-debugging-port=****`` argument to chrome execution command as [explained here](https://stackoverflow.com/a/75431084). Ok, let's hammer it home for Windows 11. Type "Chrome" to your Windows search bar, right click to Chrome, click "Open file location". You will see the shortcut of Chrome, right click it, click "Properties" and add ``--remote-debugging-port=9222`` to end of "target" section. It is ``"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222`` in my end. After setting port, you can use "port" argument of ``Driver.run()``,
 
 ```python3
