@@ -50,7 +50,7 @@ from perplexity.driver import Driver
 
 cli = Driver()
 
-cli.run(r'C:\Users\{os.getlogin()}\AppData\Local\Google\Chrome\User Data')
+cli.run(rf'C:\Users\{os.getlogin()}\AppData\Local\Google\Chrome\User Data')
 ```
 
 You can use your own chrome instance for Web Interface too. To do this, you need to add ``--remote-debugging-port=****`` argument to chrome execution command as [explained here](https://stackoverflow.com/a/75431084). Ok, let's hammer it home for Windows 11. Type "Chrome" to your Windows search bar, right click to Chrome, click "Open file location". You will see the shortcut of Chrome, right click it, click "Properties" and add ``--remote-debugging-port=9222`` to end of "target" section. It is ``"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222`` in my end. After setting port, you can use "port" argument of ``Driver.run()``,
@@ -61,7 +61,7 @@ from perplexity.driver import Driver
 
 cli = Driver()
 
-cli.run(r'C:\Users\{os.getlogin()}\AppData\Local\Google\Chrome\User Data', port=9222)
+cli.run(rf'C:\Users\{os.getlogin()}\AppData\Local\Google\Chrome\User Data', port=9222)
 ```
 
 ## How To Use API
