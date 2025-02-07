@@ -64,6 +64,9 @@ cli = Driver()
 cli.run(rf'C:\Users\{os.getlogin()}\AppData\Local\Google\Chrome\User Data', port=9222)
 ```
 
+> [!CAUTION]
+> Using existing Chrome Instance isn't completely undetected. It may enter dead loop in Cloudflare verify page. The only way to bypass it is creating a new instance (so not using "port").
+
 ## How To Use API
 First thing first, [Perplexity.ai](https://perplexity.ai/) is protected by cloudflare, and [emailnator](https://emailnator.com/) too. We need to open this pages manually and get the cookies. Do not forget these cookies are temporary, so you need to renew them continuously. [Here](#how-to-get-the-cookies) how to get your cookies.
 
