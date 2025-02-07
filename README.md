@@ -23,7 +23,7 @@ pip3 install -r requirements.txt
 
 or with single-line command:
 ```sh
-pip3 install requests&&pip3 install websocket-client&&pip3 install requests-toolbelt
+pip3 install requests && pip3 install requests-toolbelt && pip3 install websocket-client && pip3 install curl_cffi
 ```
 
 and aiohttp if you are going to use asynchronous version:
@@ -32,11 +32,39 @@ and aiohttp if you are going to use asynchronous version:
 pip3 install aiohttp
 ```
 
+and patchright if you are going to use web interface
+
+```sh
+pip3 install patchright && patchright install chromium && pip3 install playwright
+```
+
 </details>
 
 
+## How To Use Web Interface
+If you're just a normal user who wants to use Perplexity Pro/Reasoning unlimited and not interested in using Perplexity API in python codes, then you can use Web Interface feature. It will simply create accounts in background for you and when you run out of copilots, the new account will automatically open in new tab. [Patchright](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-python#best-practices) uses [chrome user data directory](https://www.google.com/search?q=chrome+user+data+directory) to be completely undetected, it's mostly ``C:\Users\YourName\AppData\Local\Google\Chrome\User Data`` for Windows, as shown below,
 
-## How To Use
+```python3
+import os
+from perplexity.driver import Driver
+
+cli = Driver()
+
+cli.run(r'C:\Users\{os.getlogin()}\AppData\Local\Google\Chrome\User Data')
+```
+
+You can use your own chrome instance for Web Interface too. To do this, you need to add ``--remote-debugging-port=****`` argument to chrome execution command as [explained here](https://stackoverflow.com/a/75431084). Ok, let's hammer it home for Windows 11. Type "Chrome" to your Windows search bar, right click to Chrome, click "Open file location". You will see the shortcut of Chrome, right click it, click "Properties" and add ``--remote-debugging-port=9222`` to end of "target" section. It is ``"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222`` in my end. After setting port, you can use "port" argument of ``Driver.run()``,
+
+```python3
+import os
+from perplexity.driver import Driver
+
+cli = Driver()
+
+cli.run(r'C:\Users\{os.getlogin()}\AppData\Local\Google\Chrome\User Data', port=9222)
+```
+
+## How To Use API
 First thing first, [Perplexity.ai](https://perplexity.ai/) is protected by cloudflare, and [emailnator](https://emailnator.com/) too. We need to open this pages manually and get the cookies. Do not forget these cookies are temporary, so you need to renew them continuously. [Here](#how-to-get-the-cookies) how to get your cookies.
 
 ```python3
@@ -186,7 +214,7 @@ print(resp)
 
 <br>
 
-## Asynchronous Version
+## Asynchronous API
 
 ```python3
 import perplexity_async
