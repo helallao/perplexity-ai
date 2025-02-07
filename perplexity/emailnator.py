@@ -1,14 +1,12 @@
-import requests
 import time
+from curl_cffi import requests
 
 class Emailnator:
     def __init__(self, headers, cookies, domain=False, plus=False, dot=False, google_mail=True):
         self.inbox = []
         self.inbox_ads = []
         
-        self.s = requests.Session()
-        self.s.headers.update(headers)
-        self.s.cookies.update(cookies)
+        self.s = requests.Session(headers=headers, cookies=cookies)
         
         data = {'email': []}
         
