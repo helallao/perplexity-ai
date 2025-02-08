@@ -104,44 +104,6 @@ for i in perplexity_cli.search('Your query here', stream=True, follow_up=resp):
 <details>
 <summary><h2>Labs</h2></summary>
 
-Open the [Perplexity.ai](https://perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
-<br>
-<br>
-
-```python3
-import perplexity
-
-labs_headers = {
-    <your headers here>
-}
-
-labs_cookies = { 
-    <your cookies here>
-}
-
-labs_cli = perplexity.LabsClient(labs_headers, labs_cookies)
-
-# model = ['llama-3.1-sonar-large-128k-online', 'llama-3.1-sonar-small-128k-online', 'llama-3.1-sonar-large-128k-chat', 'llama-3.1-sonar-small-128k-chat', 'llama-3.1-8b-instruct', 'llama-3.1-70b-instruct', 'Liquid LFM 40B']
-print(labs_cli.ask('hi', model='llama-3.1-sonar-large-128k-online'))
-
-# this function adds a custom message to conversation
-# role = ['user', 'assistant']
-labs_cli.add_custom_message('msg', role='assistant')
-
-# this function resets the conversation
-labs_cli.clear_history()
-```
-
-</details>
-
-
-<details>
-<summary><h2>Pool</h2></summary>
-
-If you don't want to wait while creating account, then pool is what you're looking for. It will simply work on background and create accounts when your current copilot & file upload count is lower than the limit.
-<br>
-<br>
-
 ```python3
 import perplexity
 
@@ -153,39 +115,17 @@ perplexity_cookies = {
     <your cookies here>
 }
 
-emailnator_headers = { 
-    <your headers here>
-}
+labs_cli = perplexity.LabsClient(perplexity_headers, perplexity_cookies)
 
-emailnator_cookies = { 
-    <your cookies here>
-}
+# model = ['sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning']
+# stream = returns a generator when enabled and just final response when disabled
+print(labs_cli.ask('Your query here', model='sonar-pro', stream=False))
 
-
-def my_text_prompt_solver(query):
-    return input(f'{query}: ')
-
-def my_checkbox_prompt_solver(description, options):
-    print(description + '\n' + '\n'.join([str(x) + ' - ' + options[x] for x in options]))
-    return [int(input('--> '))]
-
-# copilots = minimum needed copilot count, when current copilot count is lower than this, a new account will be created in the background
-# file_uploads = minimum needed file upload count, when current file upload count is lower than this, a new account will be created in the background
-# threads = how many accounts will be created in the background at the same time, if you're not going to use 50+ copilots in a minute, don't increase this
-pool = perplexity.Pool(perplexity_headers, perplexity_cookies, emailnator_headers, emailnator_cookies, copilots=10, file_uploads=10, threads=1)
-
-# everything is same
-resp = pool.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], solvers={
-    'text': my_text_prompt_solver,
-    'checkbox': my_checkbox_prompt_solver
-    })
-print(resp)
+for i in labs_cli.ask('Your query here', model='sonar-reasoning-pro', stream=True):
+    print(i)
 ```
 
 </details>
-
-
-<br>
 
 ## Asynchronous API
 
