@@ -130,8 +130,8 @@ for i in labs_cli.ask('Your query here', model='sonar-reasoning-pro', stream=Tru
 ## Asynchronous API
 
 ```python3
-import perplexity_async
 import asyncio
+import perplexity_async
 
 perplexity_headers = { 
     <your headers here>
@@ -149,45 +149,15 @@ emailnator_cookies = {
     <your cookies here>
 }
 
-
-# takes a string as query, and returns a string as answer.
-async def my_text_prompt_solver(query):
-    return input(f'{query}: ')
-
-# takes a string as description and a dictionary as options. Dictionary consists of ids and values. Example: {1: "Orange", 2: "Banana"}
-# returns a list of integers which are ids of selected options. Let's say you selected "Banana", function should return [2]
-async def my_checkbox_prompt_solver(description, options):
-    print(description + '\n' + '\n'.join([str(x) + ' - ' + options[x] for x in options]))
-    return [int(input('--> '))]
-
-
 async def test():
-    # If you're going to use your own account, login to your account and copy headers/cookies (reload the page). Set "own" as True, and do not call "create_account" function. This will deactivate copilot and file upload limit controls
-    perplexity_cli = await perplexity_async.Client(perplexity_headers, perplexity_cookies, own=False)
-    await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 copilots will be renewed. You can pass this one if you are not going to use "copilot" mode
-
-    # modes = ['concise', 'copilot']
-    # focus = ['internet', 'scholar', 'writing', 'wolfram', 'youtube', 'reddit']
-    # files = file list, each element of list is tuple like this: (data, filetype) perplexity supports two file types, txt and pdf
-    # follow_up = last query info for follow-up queries, you can directly pass response json from a query, look at second example below.
-    # ai_model = ['default', 'claude 3.5 sonnet', 'sonar large', 'gpt-4o', 'sonar huge', 'grok-2', 'claude 3.5 haiku'] only works for own=True clients (perplexity_async.Client(..., own=True))
-    # solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
-    resp = await perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], ai_model='default', solvers={
-        'text': my_text_prompt_solver,
-        'checkbox': my_checkbox_prompt_solver
-    })
-    print(resp)
-
-    # second example to show how to use follow-up queries
-    # you can't use file uploads on follow-up queries
-    # you can pass response json from a query directly like below
-    resp2 = await perplexity_cli.search('Your query here', mode='copilot', focus='internet', follow_up=resp, solvers={
-        'text': my_text_prompt_solver,
-        'checkbox': my_checkbox_prompt_solver
-    })
-    print(resp2)
-
-    # await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function again when you're out of copilots
+    labs_cli = await perplexity_async.LabsClient(perplexity_headers, perplexity_cookies)
+    
+    # model = ['sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning']
+    # stream = returns a generator when enabled and just final response when disabled
+    print(await labs_cli.ask('Your query here', model='sonar-pro', stream=False))
+    
+    async for i in await labs_cli.ask('Your query here', model='sonar-reasoning-pro', stream=True):
+        print(i)
 
 asyncio.run(test())
 ```
@@ -196,18 +166,14 @@ asyncio.run(test())
 <details>
 <summary><h2>Asynchronous Labs</h2></summary>
 
-Open the [Labs](https://labs.perplexity.ai/) and copy headers/cookies as explained [here](#how-to-get-the-cookies) (reload the page).
-<br>
-<br>
-
 ```python3
 import perplexity_async
 
-labs_headers = {
+perplexity_headers = {
     <your headers here>
 }
 
-labs_cookies = { 
+perplexity_cookies = { 
     <your cookies here>
 }
 
@@ -216,13 +182,6 @@ async def test():
 
     # model = ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'codellama-70b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b-instruct', 'mistral-medium', 'related']
     print(await labs_cli.ask('hi', model='pplx-7b-online'))
-
-    # this function adds a custom message to conversation
-    # role = ['user', 'assistant']
-    labs_cli.add_custom_message('msg', role='assistant')
-
-    # this function resets the conversation
-    labs_cli.clear_history()
 
 asyncio.run(test())
 ```
