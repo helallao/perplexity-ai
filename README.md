@@ -95,11 +95,9 @@ perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates 
 resp = perplexity_cli.search('Your query here', mode='auto', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 
-# second example to show how to use follow-up queries
-resp2 = perplexity_cli.search('Your query here', follow_up=resp)
-print(resp2)
-
-# perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function again when you run out of copilots
+# second example to show how to use follow-up queries and stream response
+for i in perplexity_cli.search('Your query here', stream=True, follow_up=resp):
+    print(i)
 ```
 
 
