@@ -208,10 +208,14 @@ perplexity_cookies = {
 }
 
 async def test():
-    labs_cli = await perplexity_async.LabsClient(labs_headers, labs_cookies)
-
-    # model = ['pplx-7b-online', 'pplx-70b-online', 'pplx-7b-chat', 'pplx-70b-chat', 'mistral-7b-instruct', 'codellama-34b-instruct', 'codellama-70b-instruct', 'llama-2-70b-chat', 'llava-7b-chat', 'mixtral-8x7b-instruct', 'mistral-medium', 'related']
-    print(await labs_cli.ask('hi', model='pplx-7b-online'))
+    labs_cli = await perplexity_async.LabsClient(perplexity_headers, perplexity_cookies)
+    
+    # model = ['sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning']
+    # stream = returns a generator when enabled and just final response when disabled
+    print(await labs_cli.ask('Your query here', model='sonar-pro', stream=False))
+    
+    async for i in await labs_cli.ask('Your query here', model='sonar-reasoning-pro', stream=True):
+        print(i)
 
 asyncio.run(test())
 ```
