@@ -147,7 +147,7 @@ class Client:
             ]))
             
             while not self.last_file_upload_info:
-                pass
+                time.sleep(0.01)
             self.message_counter += 1
             
             if not self.last_file_upload_info['success']:
