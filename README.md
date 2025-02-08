@@ -222,9 +222,6 @@ asyncio.run(test())
 
 </details>
 
-<br>
-
-
 ## How To Get The Cookies
 Do not forget these cookies are temporary, so you need to renew them continuously.
 
@@ -239,8 +236,3 @@ Do not forget these cookies are temporary, so you need to renew them continuousl
 <img src="images/perplexity2.jpg">
 
 3. Don't confuse the headers and cookies for [emailnator](https://emailnator.com/) and [Perplexity.ai](https://perplexity.ai/), look at [How To Use](#how-to-use) to learn how to use them.
-
-
-# Thanks To
-* [perplexityai](https://github.com/nathanrchn/perplexityai) by [nathanrchn](https://github.com/nathanrchn)
-* [dominicOT](https://github.com/dominicOT), [Kerry1207](https://github.com/Kerry1207) and [drimeF0](https://github.com/drimeF0) for their contributions
