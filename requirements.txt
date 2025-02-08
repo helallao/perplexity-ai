@@ -1,4 +1,2 @@
-requests
-requests-toolbelt
-websocket-client
 curl_cffi
+websocket-client
