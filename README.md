@@ -1,8 +1,5 @@
-# Perplexity.ai
-This module is simply just an API Wrapper and account generator. It serves as an API wrapper with free copilots.
-
-## How It Works
-This module uses [emailnator](https://emailnator.com/) to generate new accounts. As you know, when you create a new account, you will have 5 copilots. That's how it works! This module will generate you new gmails (using @googlemail.com right now) with [emailnator](https://emailnator.com/) and you will have **UNLIMITED COPILOTS!**
+# Perplexity
+This module uses [emailnator](https://emailnator.com/) to generate new accounts. As you know, when you create a new account, you will have 5 pro queries. This module will generate you new gmails with [emailnator](https://emailnator.com/) and you will have unlimited pro queries.
 
 ## Requirements
 
@@ -10,32 +7,25 @@ This module uses [emailnator](https://emailnator.com/) to generate new accounts.
 <summary>Click to expand</summary>
 <br>
 
-* [requests](https://pypi.org/project/requests/)
-* [requests-toolbelt](https://pypi.org/project/requests-toolbelt/)
+* [curl_cffi](https://pypi.org/project/curl-cffi/)
 * [websocket-client](https://pypi.org/project/websocket-client/)
-* [aiohttp](https://pypi.org/project/aiohttp/) (if you are going to use asynchronous version)
+* [patchright](https://pypi.org/project/patchright/) & [playwright](https://pypi.org/project/playwright/) (if you are going to use web interface)
 
 
 Install requirements with:
 ```sh
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 or with single-line command:
 ```sh
-pip3 install requests && pip3 install requests-toolbelt && pip3 install websocket-client && pip3 install curl_cffi
-```
-
-and aiohttp if you are going to use asynchronous version:
-
-```sh
-pip3 install aiohttp
+pip install curl_cffi websocket-client
 ```
 
 and patchright if you are going to use web interface
 
 ```sh
-pip3 install patchright && patchright install chromium && pip3 install playwright
+pip install patchright playwright && patchright install chromium
 ```
 
 </details>
@@ -91,42 +81,22 @@ emailnator_cookies = {
     <your cookies here>
 }
 
-
-# If you're going to use your own account, login to your account and copy headers/cookies (reload the page). Set "own" as True, and do not call "create_account" function. This will deactivate copilot and file upload limit controls
+# If you're going to use your own account, login to your account and copy headers/cookies (reload the page). Set "own" as True, and do not call "create_account" function
 perplexity_cli = perplexity.Client(perplexity_headers, perplexity_cookies, own=False)
-perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 copilots will be renewed. You can pass this one if you are not going to use "copilot" mode
+perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed. You can pass this one if you are going to use "auto" mode
 
-
-# takes a string as query, and returns a string as answer.
-def my_text_prompt_solver(query):
-    return input(f'{query}: ')
-
-# takes a string as description and a dictionary as options. Dictionary consists of ids and values. Example: {1: "Orange", 2: "Banana"}
-# returns a list of integers which are ids of selected options. Let's say you selected "Banana", function should return [2]
-def my_checkbox_prompt_solver(description, options):
-    print(description + '\n' + '\n'.join([str(x) + ' - ' + options[x] for x in options]))
-    return [int(input('--> '))]
-
-
-# modes = ['concise', 'copilot']
-# focus = ['internet', 'scholar', 'wolfram', 'writing', 'youtube', 'reddit']
-# files = file list, each element of list is tuple like this: (data, filename)
-# follow_up = last query info for follow-up queries, you can directly pass response json from a query, look at second example below.
-# ai_model = ['default', 'claude 3.5 sonnet', 'sonar large', 'gpt-4o', 'sonar huge', 'grok-2', 'claude 3.5 haiku'] only works for own=True clients (perplexity.Client(..., own=True))
-# solvers, list of functions to answer questions of ai while using copilot, there are 2 type of solvers, text and checkbox. If you do not define function for a solver, questions in that solver type will be skipped
-resp = perplexity_cli.search('Your query here', mode='copilot', focus='internet', files=[(open('myfile.txt', 'rb').read(), 'txt'), (open('myfile2.pdf', 'rb').read(), 'pdf')], ai_model='default', solvers={
-    'text': my_text_prompt_solver,
-    'checkbox': my_checkbox_prompt_solver
-    })
+# mode = ['auto', 'pro', 'r1', 'o3-mini']
+# sources = ['web', 'scholar', 'social']
+# files = a dictionary which has keys as filenames and values as file data
+# stream = returns a generator when enabled and just final response when disabled
+# language = ISO 639 code of language you want to use
+# follow_up = last query info for follow-up queries, you can directly pass response from a query, look at second example below
+# incognito = Enables incognito mode, for people who are using their own account
+resp = perplexity_cli.search('Your query here', mode='auto', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 
 # second example to show how to use follow-up queries
-# you can't use file uploads on follow-up queries
-# you can pass response json from a query directly like below
-resp2 = perplexity_cli.search('Your query here', mode='copilot', focus='internet', follow_up=resp, solvers={
-    'text': my_text_prompt_solver,
-    'checkbox': my_checkbox_prompt_solver
-    })
+resp2 = perplexity_cli.search('Your query here', follow_up=resp)
 print(resp2)
 
 # perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Call this function again when you run out of copilots
