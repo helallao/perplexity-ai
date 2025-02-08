@@ -160,7 +160,7 @@ class Client:
             
             mp.addpart(name='file', content_type=mimetypes.guess_type(filename)[0], filename=filename, data=file)
             
-            upload_resp = requests.post(self.last_file_upload_info['url'], multipart=mp)
+            upload_resp = self.session.post(self.last_file_upload_info['url'], multipart=mp)
             
             if not upload_resp.ok:
                 raise Exception('File upload error', upload_resp)
