@@ -85,7 +85,7 @@ emailnator_cookies = {
 perplexity_cli = perplexity.Client(perplexity_headers, perplexity_cookies, own=False)
 perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed. You can pass this one if you are going to use "auto" mode
 
-# mode = ['auto', 'pro', 'r1', 'o3-mini']
+# mode = ['auto', 'pro', 'deep research', 'r1', 'o3-mini']
 # sources = ['web', 'scholar', 'social']
 # files = a dictionary which has keys as filenames and values as file data
 # stream = returns a generator when enabled and just final response when disabled
@@ -154,7 +154,7 @@ async def test():
     perplexity_cli = await perplexity_async.Client(perplexity_headers, perplexity_cookies, own=False)
     await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed. You can pass this one if you are going to use "auto" mode
 
-    # mode = ['auto', 'pro', 'r1', 'o3-mini']
+    # mode = ['auto', 'pro', 'deep research', 'r1', 'o3-mini']
     # sources = ['web', 'scholar', 'social']
     # files = a dictionary which has keys as filenames and values as file data
     # stream = returns a generator when enabled and just final response when disabled
