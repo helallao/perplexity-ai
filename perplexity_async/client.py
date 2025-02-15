@@ -1,5 +1,7 @@
 import re
+import ssl
 import json
+import socket
 import random
 import asyncio
 import mimetypes
@@ -49,13 +51,18 @@ class Client(AsyncMixin):
         
         assert (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text == 'OK'
         
+        context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_3
+        self.sock = context.wrap_socket(socket.create_connection(('www.perplexity.ai', 443)), server_hostname='www.perplexity.ai')
+        
         self.ws = WebSocketApp(
             url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
             header={'User-Agent': self.session.headers['User-Agent']},
             cookie='; '.join([f'{key}={value}' for key, value in self.session.cookies.get_dict().items()]),
             on_open=lambda ws: (ws.send('2probe'), ws.send('5')),
             on_message=self._on_message,
-            on_error=lambda ws, error: print(f'Websocket Error: {error}')
+            on_error=lambda ws, error: print(f'Websocket Error: {error}'),
+            socket=self.sock
         )
         
         Thread(target=self.ws.run_forever, daemon=True).start()
@@ -98,10 +105,15 @@ class Client(AsyncMixin):
         self.file_upload = 10
         
         self.ws.close()
+        del self.sock
         
         self.sid = json.loads((await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}')).text[1:])['sid']
         
         assert (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text == 'OK'
+        
+        context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_3
+        self.sock = context.wrap_socket(socket.create_connection(('www.perplexity.ai', 443)), server_hostname='www.perplexity.ai')
         
         self.ws = WebSocketApp(
             url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
@@ -109,7 +121,8 @@ class Client(AsyncMixin):
             cookie='; '.join([f'{key}={value}' for key, value in self.session.cookies.get_dict().items()]),
             on_open=lambda ws: (ws.send('2probe'), ws.send('5')),
             on_message=self._on_message,
-            on_error=lambda ws, error: print(f'Websocket Error: {error}')
+            on_error=lambda ws, error: print(f'Websocket Error: {error}'),
+            socket=self.sock
         )
         
         Thread(target=self.ws.run_forever).start()
@@ -142,9 +155,9 @@ class Client(AsyncMixin):
         '''
         Query function
         '''
-        assert mode in ['auto', 'pro', 'r1', 'o3-mini'], 'Search modes -> ["auto", "pro", "r1", "o3-mini"]'
+        assert mode in ['auto', 'pro', 'deep research', 'r1', 'o3-mini'], 'Search modes -> ["auto", "pro", "deep research", "r1", "o3-mini"]'
         assert all([source in ('web', 'scholar', 'social') for source in sources]), 'Sources -> ["web", "scholar", "social"]'
-        assert self.copilot > 0 if mode in ['pro', 'r1', 'o3-mini'] else True, 'You have used all of your enhanced (pro) queries'
+        assert self.copilot > 0 if mode in ['pro', 'deep research', 'r1', 'o3-mini'] else True, 'You have used all of your enhanced (pro) queries'
         assert self.file_upload - len(files) >= 0 if files else True, f'You have tried to upload {len(files)} files but you have {self.file_upload} file upload(s) remaining.'
         
         self.copilot = self.copilot - 1 if mode in ['pro', 'r1', 'o3-mini'] else self.copilot
@@ -162,7 +175,7 @@ class Client(AsyncMixin):
                     'content_type': mimetypes.guess_type(filename)[0],
                     'filename': filename,
                     'source': 'default',
-                    'version': '2.16'
+                    'version': '2.18'
                 }
             ]))
             
@@ -198,10 +211,10 @@ class Client(AsyncMixin):
                 'language': language,
                 'last_backend_uuid': follow_up['backend_uuid'] if follow_up else None,
                 'mode': 'concise' if mode == 'auto' else 'copilot',
-                'model_preference': {'auto': None, 'pro': None, 'r1': 'r1', 'o3-mini': 'o3mini'}[mode],
+                'model_preference': {'auto': None, 'pro': None, 'deep research': 'pplx_alpha', 'r1': 'r1', 'o3-mini': 'o3mini'}[mode],
                 'source': 'default',
                 'sources': sources,
-                'version': '2.16'
+                'version': '2.18'
             }
         ]))
         
