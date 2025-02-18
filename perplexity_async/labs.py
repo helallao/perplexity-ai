@@ -1,4 +1,6 @@
+import ssl
 import json
+import socket
 import random
 import asyncio
 from threading import Thread
@@ -6,8 +8,6 @@ from curl_cffi import requests
 from websocket import WebSocketApp
 
 
-# https://dev.to/akarshan/asynchronous-python-magic-how-to-create-awaitable-constructors-with-asyncmixin-18j5
-# https://web.archive.org/web/20230915163459/https://dev.to/akarshan/asynchronous-python-magic-how-to-create-awaitable-constructors-with-asyncmixin-18j5
 class AsyncMixin:
     def __init__(self, *args, **kwargs):
         self.__storedargs = args, kwargs
@@ -39,6 +39,10 @@ class LabsClient(AsyncMixin):
         
         assert (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text == 'OK'
         
+        context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_3
+        self.sock = context.wrap_socket(socket.create_connection(('www.perplexity.ai', 443)), server_hostname='www.perplexity.ai')
+        
         self.ws = WebSocketApp(
             url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
             header={'User-Agent': self.session.headers['User-Agent']},
@@ -46,6 +50,7 @@ class LabsClient(AsyncMixin):
             on_open=lambda ws: (ws.send('2probe'), ws.send('5')),
             on_message=self._on_message,
             on_error=lambda ws, error: print(f'Websocket Error: {error}'),
+            socket=self.sock
         )
         
         Thread(target=self.ws.run_forever, daemon=True).start()
@@ -81,7 +86,7 @@ class LabsClient(AsyncMixin):
                 'messages': self.history,
                 'model': model,
                 'source': 'default',
-                'version': '2.16',
+                'version': '2.18',
             }
         ]))
         
