@@ -96,26 +96,26 @@ class Client(AsyncMixin):
         Function to create a new account
         '''
         while True:
-            #try:
-            emailnator_cli = await Emailnator(cookies)
-            
-            resp = await self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
-                'email': emailnator_cli.email,
-                'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
-                'callbackUrl': 'https://www.perplexity.ai/',
-                'json': 'true'
-            })
-            
-            if resp.ok:
-                new_msgs = await emailnator_cli.reload(wait_for=lambda x: x['subject'] == 'Sign in to Perplexity', timeout=20)
+            try:
+                emailnator_cli = await Emailnator(cookies)
                 
-                if new_msgs:
-                    break
-            else:
-                print('Perplexity account creating error:', resp)
+                resp = await self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
+                    'email': emailnator_cli.email,
+                    'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
+                    'callbackUrl': 'https://www.perplexity.ai/',
+                    'json': 'true'
+                })
+                
+                if resp.ok:
+                    new_msgs = await emailnator_cli.reload(wait_for=lambda x: x['subject'] == 'Sign in to Perplexity', timeout=20)
+                    
+                    if new_msgs:
+                        break
+                else:
+                    print('Perplexity account creating error:', resp)
             
-            #except Exception as e:
-            #    print(e)
+            except Exception:
+                pass
         
         msg = emailnator_cli.get(func=lambda x: x['subject'] == 'Sign in to Perplexity')
         new_account_link = self.signin_regex.search(await emailnator_cli.open(msg['messageID'])).group(1)
