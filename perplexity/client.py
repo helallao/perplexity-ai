@@ -94,7 +94,7 @@ class Client:
                 else:
                     print('Perplexity account creating error:', resp)
             
-            except:
+            except Exception:
                 pass
         
         msg = emailnator_cli.get(func=lambda x: x['subject'] == 'Sign in to Perplexity')
