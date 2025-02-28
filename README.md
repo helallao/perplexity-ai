@@ -189,7 +189,7 @@ emailnator_cookies = {
 
 async def test():
     perplexity_cli = await perplexity_async.Client()
-    perplexity_cli.create_account(emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed.
+    await perplexity_cli.create_account(emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed.
 
     resp = await perplexity_cli.search('Your query here', mode='r1', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
     print(resp)
@@ -236,5 +236,6 @@ asyncio.run(test())
 * Go to the "Network" tab in the inspector.
 * Refresh the page, right click the first request, hover on "Copy" and click to "Copy as cURL (bash)".
 * Now go to the [curlconverter](https://curlconverter.com/python/) and paste your code here. The cookies dictionary will appear, copy and use it in your codes.
+* Cookies for [Emailnator](https://emailnator.com/) are temporary, you need to renew them continuously.
 
 <img src="images/emailnator.png">
