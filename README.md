@@ -60,30 +60,12 @@ cli.run(rf'C:\Users\{os.getlogin()}\AppData\Local\Google\Chrome\User Data', port
 > Using existing Chrome Instance isn't completely undetected. It may enter dead loop in Cloudflare verify page. The only way to bypass it is creating a new instance (so not using "port").
 
 ## How To Use API
-First thing first, [Perplexity.ai](https://perplexity.ai/) is protected by cloudflare, and [emailnator](https://emailnator.com/) too. We need to open this pages manually and get the cookies. Do not forget these cookies are temporary, so you need to renew them continuously. [Here](#how-to-get-the-cookies) how to get your cookies.
+Below is an example code for simple usage, without using your own account or generating new accounts.
 
 ```python3
 import perplexity
 
-perplexity_headers = {
-    <your headers here>
-}
-
-perplexity_cookies = { 
-    <your cookies here>
-}
-
-emailnator_headers = { 
-    <your headers here>
-}
-
-emailnator_cookies = { 
-    <your cookies here>
-}
-
-# If you're going to use your own account, login to your account and copy headers/cookies (reload the page). Set "own" as True, and do not call "create_account" function
-perplexity_cli = perplexity.Client(perplexity_headers, perplexity_cookies, own=False)
-perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed. You can pass this one if you are going to use "auto" mode
+perplexity_cli = perplexity.Client()
 
 # mode = ['auto', 'pro', 'deep research', 'r1', 'o3-mini']
 # sources = ['web', 'scholar', 'social']
@@ -92,7 +74,7 @@ perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates 
 # language = ISO 639 code of language you want to use
 # follow_up = last query info for follow-up queries, you can directly pass response from a query, look at second example below
 # incognito = Enables incognito mode, for people who are using their own account
-resp = perplexity_cli.search('Your query here', mode='auto', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+resp = perplexity_cli.search('Your query here', mode='auto', sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 
 # second example to show how to use follow-up queries and stream response
@@ -100,6 +82,36 @@ for i in perplexity_cli.search('Your query here', stream=True, follow_up=resp):
     print(i)
 ```
 
+And this is how you use your own account, you need to get your cookies in order to use your own account. Look at [How To Get The Cookies](#how-to-get-the-cookies),
+
+```python3
+import perplexity
+
+perplexity_cookies = { 
+    <your cookies here>
+}
+
+perplexity_cli = perplexity.Client(perplexity_cookies)
+
+resp = perplexity_cli.search('Your query here', mode='r1', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+print(resp)
+```
+
+And finally account generating, you need to get cookies for [emailnator](https://emailnator.com/) to use this feature. Look at [How To Get The Cookies](#how-to-get-the-cookies),
+
+```python3
+import perplexity
+
+emailnator_cookies = { 
+    <your cookies here>
+}
+
+perplexity_cli = perplexity.Client()
+perplexity_cli.create_account(emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed.
+
+resp = perplexity_cli.search('Your query here', mode='r1', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+print(resp)
+```
 
 <details>
 <summary><h2>Labs</h2></summary>
@@ -107,19 +119,11 @@ for i in perplexity_cli.search('Your query here', stream=True, follow_up=resp):
 ```python3
 import perplexity
 
-perplexity_headers = {
-    <your headers here>
-}
+labs_cli = perplexity.LabsClient()
 
-perplexity_cookies = { 
-    <your cookies here>
-}
-
-labs_cli = perplexity.LabsClient(perplexity_headers, perplexity_cookies)
-
-# model = ['sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning']
+# model = ['r1-1776', 'sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning']
 # stream = returns a generator when enabled and just final response when disabled
-print(labs_cli.ask('Your query here', model='sonar-pro', stream=False))
+print(labs_cli.ask('Your query here', model='r1-1776', stream=False))
 
 for i in labs_cli.ask('Your query here', model='sonar-reasoning-pro', stream=True):
     print(i)
