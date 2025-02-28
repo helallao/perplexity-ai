@@ -37,11 +37,31 @@ class Client(AsyncMixin):
     '''
     A client for interacting with the Perplexity AI API.
     '''
-    async def __ainit__(self, headers, cookies, own=False):
-        self.session = requests.AsyncSession(headers=headers, cookies=cookies)
-        self.own = own
-        self.copilot = 0 if not own else float('inf')
-        self.file_upload = 0 if not own else float('inf')
+    async def __ainit__(self, cookies={}):
+        self.session = requests.AsyncSession(headers={
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept-language': 'en-US,en;q=0.9',
+            'cache-control': 'max-age=0',
+            'dnt': '1',
+            'priority': 'u=0, i',
+            'sec-ch-ua': '"Not;A=Brand";v="24", "Chromium";v="128"',
+            'sec-ch-ua-arch': '"x86"',
+            'sec-ch-ua-bitness': '"64"',
+            'sec-ch-ua-full-version': '"128.0.6613.120"',
+            'sec-ch-ua-full-version-list': '"Not;A=Brand";v="24.0.0.0", "Chromium";v="128.0.6613.120"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-model': '""',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-ch-ua-platform-version': '"19.0.0"',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'same-origin',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        }, cookies=cookies, impersonate='chrome')
+        self.copilot = 0 if not cookies else float('inf')
+        self.file_upload = 0 if not cookies else float('inf')
         self.message_counter = 1
         self.signin_regex = re.compile(r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
         self.last_answer = None
@@ -50,6 +70,7 @@ class Client(AsyncMixin):
         self.sid = json.loads((await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}')).text[1:])['sid']
         
         assert (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text == 'OK'
+        await self.session.get('https://www.perplexity.ai/api/auth/session')
         
         context = ssl.create_default_context()
         context.minimum_version = ssl.TLSVersion.TLSv1_3
@@ -70,31 +91,31 @@ class Client(AsyncMixin):
         while not (self.ws.sock and self.ws.sock.connected):
             await asyncio.sleep(0.01)
     
-    async def create_account(self, headers, cookies):
+    async def create_account(self, cookies):
         '''
         Function to create a new account
         '''
         while True:
-            try:
-                emailnator_cli = await Emailnator(headers, cookies)
-                
-                resp = await self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
-                    'email': emailnator_cli.email,
-                    'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
-                    'callbackUrl': 'https://www.perplexity.ai/',
-                    'json': 'true'
-                })
-                
-                if resp.ok:
-                    new_msgs = await emailnator_cli.reload(wait_for=lambda x: x['subject'] == 'Sign in to Perplexity', timeout=20)
-                    
-                    if new_msgs:
-                        break
-                else:
-                    print('Perplexity account creating error:', resp)
+            #try:
+            emailnator_cli = await Emailnator(cookies)
             
-            except:
-                pass
+            resp = await self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
+                'email': emailnator_cli.email,
+                'csrfToken': self.session.cookies.get_dict()['next-auth.csrf-token'].split('%')[0],
+                'callbackUrl': 'https://www.perplexity.ai/',
+                'json': 'true'
+            })
+            
+            if resp.ok:
+                new_msgs = await emailnator_cli.reload(wait_for=lambda x: x['subject'] == 'Sign in to Perplexity', timeout=20)
+                
+                if new_msgs:
+                    break
+            else:
+                print('Perplexity account creating error:', resp)
+            
+            #except Exception as e:
+            #    print(e)
         
         msg = emailnator_cli.get(func=lambda x: x['subject'] == 'Sign in to Perplexity')
         new_account_link = self.signin_regex.search(await emailnator_cli.open(msg['messageID'])).group(1)
