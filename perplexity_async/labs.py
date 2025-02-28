@@ -30,8 +30,29 @@ class LabsClient(AsyncMixin):
     '''
     A client for interacting with the Perplexity AI Labs API.
     '''
-    async def __ainit__(self, headers, cookies):
-        self.session = requests.AsyncSession(headers=headers, cookies=cookies)
+    async def __ainit__(self):
+        self.session = requests.AsyncSession(headers={
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept-language': 'en-US,en;q=0.9',
+            'cache-control': 'max-age=0',
+            'dnt': '1',
+            'priority': 'u=0, i',
+            'sec-ch-ua': '"Not;A=Brand";v="24", "Chromium";v="128"',
+            'sec-ch-ua-arch': '"x86"',
+            'sec-ch-ua-bitness': '"64"',
+            'sec-ch-ua-full-version': '"128.0.6613.120"',
+            'sec-ch-ua-full-version-list': '"Not;A=Brand";v="24.0.0.0", "Chromium";v="128.0.6613.120"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-model': '""',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-ch-ua-platform-version': '"19.0.0"',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'same-origin',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        }, impersonate='chrome')
         self.timestamp = format(random.getrandbits(32), '08x')
         self.sid = json.loads((await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}')).text[1:])['sid']
         self.last_answer = None
@@ -71,11 +92,11 @@ class LabsClient(AsyncMixin):
             if 'final' in response:
                 self.last_answer = response
     
-    async def ask(self, query, model='sonar-pro', stream=False):
+    async def ask(self, query, model='r1-1776', stream=False):
         '''
         Query function
         '''
-        assert model in ['sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning'], 'Search models -> ["sonar-pro", "sonar", "sonar-reasoning-pro", "sonar-reasoning"]'
+        assert model in ['r1-1776', 'sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning'], 'Search models -> ["r1-1776", "sonar-pro", "sonar", "sonar-reasoning-pro", "sonar-reasoning"]'
         
         self.last_answer = None
         self.history.append({'role': 'user', 'content': query})
