@@ -17,11 +17,31 @@ class Client:
     '''
     A client for interacting with the Perplexity AI API.
     '''
-    def __init__(self, headers, cookies, own=False):
-        self.session = requests.Session(headers=headers, cookies=cookies)
-        self.own = own
-        self.copilot = 0 if not own else float('inf')
-        self.file_upload = 0 if not own else float('inf')
+    def __init__(self, cookies={}):
+        self.session = requests.Session(headers={
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept-language': 'en-US,en;q=0.9',
+            'cache-control': 'max-age=0',
+            'dnt': '1',
+            'priority': 'u=0, i',
+            'sec-ch-ua': '"Not;A=Brand";v="24", "Chromium";v="128"',
+            'sec-ch-ua-arch': '"x86"',
+            'sec-ch-ua-bitness': '"64"',
+            'sec-ch-ua-full-version': '"128.0.6613.120"',
+            'sec-ch-ua-full-version-list': '"Not;A=Brand";v="24.0.0.0", "Chromium";v="128.0.6613.120"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-model': '""',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-ch-ua-platform-version': '"19.0.0"',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'same-origin',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        }, cookies=cookies)
+        self.copilot = 0 if not cookies else float('inf')
+        self.file_upload = 0 if not cookies else float('inf')
         self.message_counter = 1
         self.signin_regex = re.compile(r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
         self.last_answer = None
@@ -30,6 +50,7 @@ class Client:
         self.sid = json.loads(self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}').text[1:])['sid']
         
         assert self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
+        self.session.get('https://www.perplexity.ai/api/auth/session')
         
         context = ssl.create_default_context()
         context.minimum_version = ssl.TLSVersion.TLSv1_3
@@ -50,13 +71,13 @@ class Client:
         while not (self.ws.sock and self.ws.sock.connected):
             time.sleep(0.01)
     
-    def create_account(self, headers, cookies):
+    def create_account(self, cookies):
         '''
         Function to create a new account
         '''
         while True:
             try:
-                emailnator_cli = Emailnator(headers, cookies)
+                emailnator_cli = Emailnator(cookies)
                 
                 resp = self.session.post('https://www.perplexity.ai/api/auth/signin/email', data={
                     'email': emailnator_cli.email,
