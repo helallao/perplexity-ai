@@ -132,31 +132,14 @@ for i in labs_cli.ask('Your query here', model='sonar-reasoning-pro', stream=Tru
 </details>
 
 ## Asynchronous API
+Below is an example code for simple usage, without using your own account or generating new accounts.
 
 ```python3
 import asyncio
 import perplexity_async
 
-perplexity_headers = { 
-    <your headers here>
-}
-
-perplexity_cookies = { 
-    <your cookies here> 
-}
-
-emailnator_headers = { 
-    <your headers here>
-}
-
-emailnator_cookies = { 
-    <your cookies here>
-}
-
 async def test():
-    # If you're going to use your own account, login to your account and copy headers/cookies (reload the page). Set "own" as True, and do not call "create_account" function
-    perplexity_cli = await perplexity_async.Client(perplexity_headers, perplexity_cookies, own=False)
-    await perplexity_cli.create_account(emailnator_headers, emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed. You can pass this one if you are going to use "auto" mode
+    perplexity_cli = await perplexity_async.Client()
 
     # mode = ['auto', 'pro', 'deep research', 'r1', 'o3-mini']
     # sources = ['web', 'scholar', 'social']
@@ -165,7 +148,7 @@ async def test():
     # language = ISO 639 code of language you want to use
     # follow_up = last query info for follow-up queries, you can directly pass response from a query, look at second example below
     # incognito = Enables incognito mode, for people who are using their own account
-    resp = await perplexity_cli.search('Your query here', mode='auto', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+    resp = await perplexity_cli.search('Your query here', mode='auto', sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False)
     print(resp)
 
     # second example to show how to use follow-up queries and stream response
@@ -175,27 +158,58 @@ async def test():
 asyncio.run(test())
 ```
 
-
-<details>
-<summary><h2>Asynchronous Labs</h2></summary>
+And this is how you use your own account, you need to get your cookies in order to use your own account. Look at [How To Get The Cookies](#how-to-get-the-cookies),
 
 ```python3
+import asyncio
 import perplexity_async
-
-perplexity_headers = {
-    <your headers here>
-}
 
 perplexity_cookies = { 
     <your cookies here>
 }
 
 async def test():
-    labs_cli = await perplexity_async.LabsClient(perplexity_headers, perplexity_cookies)
+    perplexity_cli = await perplexity_async.Client(perplexity_cookies)
+
+    resp = await perplexity_cli.search('Your query here', mode='r1', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+    print(resp)
+
+asyncio.run(test())
+```
+
+And finally account generating, you need to get cookies for [emailnator](https://emailnator.com/) to use this feature. Look at [How To Get The Cookies](#how-to-get-the-cookies),
+
+```python3
+import asyncio
+import perplexity_async
+
+emailnator_cookies = { 
+    <your cookies here>
+}
+
+async def test():
+    perplexity_cli = await perplexity_async.Client()
+    perplexity_cli.create_account(emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed.
+
+    resp = await perplexity_cli.search('Your query here', mode='r1', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+    print(resp)
+
+asyncio.run(test())
+```
+
+<details>
+<summary><h2>Asynchronous Labs</h2></summary>
+
+```python3
+import asyncio
+import perplexity_async
+
+async def test():
+    labs_cli = await perplexity_async.LabsClient()
     
-    # model = ['sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning']
+    # model = ['r1-1776', 'sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning']
     # stream = returns a generator when enabled and just final response when disabled
-    print(await labs_cli.ask('Your query here', model='sonar-pro', stream=False))
+    print(await labs_cli.ask('Your query here', model='r1-1776', stream=False))
     
     async for i in await labs_cli.ask('Your query here', model='sonar-reasoning-pro', stream=True):
         print(i)
@@ -206,16 +220,21 @@ asyncio.run(test())
 </details>
 
 ## How To Get The Cookies
-Do not forget these cookies are temporary, so you need to renew them continuously.
 
-1. Open [emailnator](https://emailnator.com/) website. Click F12 or Ctrl+Shift+I to open inspector. Go to the "Network" tab in the inspector, check "Preserve log" button, click the "Go !" button in the website, right click the "message-list" in the Network Tab and hover on "Copy" and click to "Copy as cURL (bash)". Now go to the [curlconverter](https://curlconverter.com/python/), paste your code here. The header and cookies dictionary will appear, copy and use them in your codes.
+### Perplexity (for using your own account)
+* Open [Perplexity.ai](https://perplexity.ai/) website and login to your account.
+* Click F12 or ``Ctrl + Shift + I`` to open inspector.
+* Go to the "Network" tab in the inspector.
+* Refresh the page, right click the first request, hover on "Copy" and click to "Copy as cURL (bash)".
+* Now go to the [curlconverter](https://curlconverter.com/python/) and paste your code here. The cookies dictionary will appear, copy and use it in your codes.
 
-<img src="images/emailnator.jpg">
+<img src="images/perplexity.png">
 
+### Emailnator (for account generating)
+* Open [Emailnator](https://emailnator.com/) website and verify you're human.
+* Click F12 or ``Ctrl + Shift + I`` to open inspector.
+* Go to the "Network" tab in the inspector.
+* Refresh the page, right click the first request, hover on "Copy" and click to "Copy as cURL (bash)".
+* Now go to the [curlconverter](https://curlconverter.com/python/) and paste your code here. The cookies dictionary will appear, copy and use it in your codes.
 
-2. Open [Perplexity.ai](https://perplexity.ai/) website. Sign out if you're signed in. Click F12 or Ctrl+Shift+I to open inspector. Go to the "Network" tab in the inspector, check "Preserve log" button, click the "Sign Up" button in the website, enter a random email and click "Continue with Email" button, right click the "email" in the Network Tab and hover on "Copy" and click to "Copy as cURL (bash)". Now go to the [curlconverter](https://curlconverter.com/python/), paste your code here. The header and cookies dictionary will appear, copy them and use in your codes.
-
-<img src="images/perplexity1.jpg">
-<img src="images/perplexity2.jpg">
-
-3. Don't confuse the headers and cookies for [emailnator](https://emailnator.com/) and [Perplexity.ai](https://perplexity.ai/), look at [How To Use](#how-to-use) to learn how to use them.
+<img src="images/emailnator.png">
