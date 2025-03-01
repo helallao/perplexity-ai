@@ -26,7 +26,7 @@ class Driver:
                 
                 while True:
                     try:
-                        emailnator_cli = Emailnator({**self.emailnator_headers, 'x-xsrf-token': unquote(self.emailnator_cookies['XSRF-TOKEN'])}, self.emailnator_cookies)
+                        emailnator_cli = Emailnator(self.emailnator_cookies, {**self.emailnator_headers, 'x-xsrf-token': unquote(self.emailnator_cookies['XSRF-TOKEN'])})
                         
                         resp = requests.post('https://www.perplexity.ai/api/auth/signin/email', data={
                             'email': emailnator_cli.email,
