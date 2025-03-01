@@ -239,3 +239,13 @@ asyncio.run(test())
 * Cookies for [Emailnator](https://emailnator.com/) are temporary, you need to renew them continuously.
 
 <img src="images/emailnator.png">
+
+## Support Me
+
+Coin | Wallet
+:---: | :---:
+BTC | 3A7zbQezyE8MhHtza6R9jWcNvvmYhRjY9z
+ETH (ERC-20) | 0xA72e6306C4A4fA2d7Dc508c37Ccf863FB9Ec285D
+USDT (TRC-20) | TQ3zGJC3ExFgbTUVhCbv81f3hVe1QbZLYL
+LTC | LLj8NdzXQxG2pKHqpCPhva7bnWufPXEYVm
+BCH | 17ViMunYyJbqndCnYwmhmCjNgVLX7qZHkS
