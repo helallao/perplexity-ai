@@ -25,34 +25,35 @@ class AsyncMixin:
         return self.__initobj().__await__()
 
 class Emailnator(AsyncMixin):
-    async def __ainit__(self, cookies, domain=False, plus=False, dot=False, google_mail=True):
+    async def __ainit__(self, cookies, headers, domain=False, plus=False, dot=False, google_mail=True):
         self.inbox = []
         self.inbox_ads = []
         
-        headers = {
-            'accept': 'application/json, text/plain, */*',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-type': 'application/json',
-            'dnt': '1',
-            'origin': 'https://www.emailnator.com',
-            'priority': 'u=1, i',
-            'referer': 'https://www.emailnator.com/',
-            'sec-ch-ua': '"Not;A=Brand";v="24", "Chromium";v="128"',
-            'sec-ch-ua-arch': '"x86"',
-            'sec-ch-ua-bitness': '"64"',
-            'sec-ch-ua-full-version': '"128.0.6613.120"',
-            'sec-ch-ua-full-version-list': '"Not;A=Brand";v="24.0.0.0", "Chromium";v="128.0.6613.120"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-model': '""',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-ch-ua-platform-version': '"19.0.0"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-            'x-requested-with': 'XMLHttpRequest',
-            'x-xsrf-token': unquote(cookies['XSRF-TOKEN']),
-        }
+        if not headers:
+            headers = {
+                'accept': 'application/json, text/plain, */*',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-type': 'application/json',
+                'dnt': '1',
+                'origin': 'https://www.emailnator.com',
+                'priority': 'u=1, i',
+                'referer': 'https://www.emailnator.com/',
+                'sec-ch-ua': '"Not;A=Brand";v="24", "Chromium";v="128"',
+                'sec-ch-ua-arch': '"x86"',
+                'sec-ch-ua-bitness': '"64"',
+                'sec-ch-ua-full-version': '"128.0.6613.120"',
+                'sec-ch-ua-full-version-list': '"Not;A=Brand";v="24.0.0.0", "Chromium";v="128.0.6613.120"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-model': '""',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-ch-ua-platform-version': '"19.0.0"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+                'x-requested-with': 'XMLHttpRequest',
+                'x-xsrf-token': unquote(cookies['XSRF-TOKEN']),
+            }
         
         self.s = requests.AsyncSession(headers=headers, cookies=cookies, impersonate='chrome')
         
