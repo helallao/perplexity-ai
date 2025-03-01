@@ -25,7 +25,7 @@ class AsyncMixin:
         return self.__initobj().__await__()
 
 class Emailnator(AsyncMixin):
-    async def __ainit__(self, cookies, headers, domain=False, plus=False, dot=False, google_mail=True):
+    async def __ainit__(self, cookies, headers={}, domain=False, plus=False, dot=False, google_mail=True):
         self.inbox = []
         self.inbox_ads = []
         
