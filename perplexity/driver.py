@@ -13,9 +13,11 @@ class Driver:
     def __init__(self):
         self.signin_regex = re.compile(r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
         self.creating_new_account = False
+        self.account_creator_running = False
+        self.renewing_emailnator_cookies = False
         self.background_pages = []
-        self.perplexity_headers = {}
-        self.emailnator_headers = {}
+        self.perplexity_cookies = None
+        self.emailnator_cookies = None
     
     def account_creator(self):
         self.new_account_link = None
@@ -51,67 +53,86 @@ class Driver:
                         print('Account creation error', e)
                         print('Renewing emailnator cookies')
                         
-                        self.emailnator_headers = None
-                        self.page.goto('https://www.emailnator.com/')
+                        self.emailnator_cookies = None
+                        self.renewing_emailnator_cookies = True
+                        
+                        while not self.emailnator_cookies:
+                            time.sleep(0.1)
                 
             else:
                 time.sleep(1)
     
     def intercept_request(self, route, request):
+        if self.renewing_emailnator_cookies and request.url != 'https://www.emailnator.com/':
+            self.page.goto('https://www.emailnator.com/')
+            return
+        
         if request.url == 'https://www.perplexity.ai/':
             response = route.fetch()
             
-            if 'Just a moment...' in response.text():
-                route.fulfill(response=response)
+            cookies = {x.split('=')[0]: x.split('=')[1] for x in request.headers['cookie'].split('; ')}
+            
+            if not self.perplexity_cookies and 'What do you want to know?' in response.text() and 'next-auth.csrf-token' in cookies:
+                self.perplexity_headers = request.headers
+                self.perplexity_cookies = cookies
+                
+                route.fulfill(body=':)')
+                
+                self.background_pages.append(self.page)
+                self.page = self.browser.new_page()
+                self.page.route('**/*', self.intercept_request)
+                self.page.goto('https://www.emailnator.com/')
             
             else:
-                if not self.perplexity_headers:
-                    self.perplexity_headers = request.headers
-                    self.perplexity_cookies = {x.split('=')[0]: x.split('=')[1] for x in request.headers['cookie'].split('; ')}
-                    
-                    route.fulfill(body=':)')
-                    
-                    self.background_pages.append(self.page)
-                    self.page = self.browser.new_page()
-                    self.page.route('**/*', self.intercept_request)
-                    self.page.goto('https://www.emailnator.com/')
-                
-                else:
-                    route.fulfill(response=response)
+                route.fulfill(response=response)
         
         elif request.url == 'https://www.emailnator.com/':
+            request_will_interrupt = False
+            
+            if self.renewing_emailnator_cookies:
+                request_will_interrupt = True
+                self.renewing_emailnator_cookies = False
+            
             response = route.fetch()
             
-            if 'Just a moment...' in response.text():
-                route.fulfill(response=response)
+            cookies = {x.split('=')[0]: x.split('=')[1] for x in request.headers['cookie'].split('; ')}
             
-            else:
-                if not self.emailnator_headers:
-                    self.emailnator_headers = request.headers
-                    self.emailnator_cookies = {x.split('=')[0]: x.split('=')[1] for x in request.headers['cookie'].split('; ')}
-                    
+            if not self.emailnator_cookies and 'Temporary Disposable Gmail | Temp Mail | Email Generator' in response.text() and 'XSRF-TOKEN' in cookies:
+                self.emailnator_headers = request.headers
+                self.emailnator_cookies = cookies
+                
+                route.fulfill(body=':)')
+                
+                if not self.account_creator_running:
+                    self.account_creator_running = True
                     Thread(target=self.account_creator).start()
-                    route.fulfill(body=':)')
-                    
-                    self.background_pages.append(self.page)
-                    self.page = self.browser.new_page()
-                    self.page.route('**/*', self.intercept_request)
-                    
-                    for page in self.background_pages:
-                        page.close()
-                    
-                    while not self.new_account_link:
-                        self.page.wait_for_timeout(1000)
-                    
-                    self.page.goto(self.new_account_link)
+                
+                if request_will_interrupt:
                     self.page.goto('https://www.perplexity.ai/')
-                    self.new_account_link = None
+                    return
+                
+                self.background_pages.append(self.page)
+                self.page = self.browser.new_page()
+                self.page.route('**/*', self.intercept_request)
+                
+                for page in self.background_pages:
+                    page.close()
+                
+                while not self.new_account_link:
+                    self.page.wait_for_timeout(1000)
+                
+                self.page.goto(self.new_account_link)
+                self.page.goto('https://www.perplexity.ai/')
+                self.new_account_link = None
+                
+            else:
+                route.fulfill(response=response)
         
-        elif '/rest/user/save-settings' in request.url:
-            response = route.fetch()
-            route.fulfill(body=response.text(), response=response)
+        elif '/rest/rate-limit' in request.url:
+            route.continue_()
+            gpt4_limit = requests.get('https://www.perplexity.ai/rest/rate-limit?version=2.18&source=default', headers=request.headers).json()['remaining']
             
-            if not self.creating_new_account and json.loads(response.text())['gpt4_limit'] == 0:
+            if not self.creating_new_account and gpt4_limit == 0:
                 self.creating_new_account = True
                 self.page = self.browser.new_page()
                 self.page.route('**/*', self.intercept_request)
