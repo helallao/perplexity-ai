@@ -67,7 +67,7 @@ import perplexity
 
 perplexity_cli = perplexity.Client()
 
-# mode = ['auto', 'pro', 'deep research', 'r1', 'o3-mini']
+# mode = ['auto', 'pro', 'reasoning', 'deep research']
 # sources = ['web', 'scholar', 'social']
 # files = a dictionary which has keys as filenames and values as file data
 # stream = returns a generator when enabled and just final response when disabled
@@ -93,7 +93,7 @@ perplexity_cookies = {
 
 perplexity_cli = perplexity.Client(perplexity_cookies)
 
-resp = perplexity_cli.search('Your query here', mode='r1', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+resp = perplexity_cli.search('Your query here', mode='reasoning', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 ```
 
@@ -109,7 +109,7 @@ emailnator_cookies = {
 perplexity_cli = perplexity.Client()
 perplexity_cli.create_account(emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed.
 
-resp = perplexity_cli.search('Your query here', mode='r1', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+resp = perplexity_cli.search('Your query here', mode='reasoning', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 ```
 
@@ -141,7 +141,7 @@ import perplexity_async
 async def test():
     perplexity_cli = await perplexity_async.Client()
 
-    # mode = ['auto', 'pro', 'deep research', 'r1', 'o3-mini']
+    # mode = ['auto', 'pro', 'reasoning', 'deep research']
     # sources = ['web', 'scholar', 'social']
     # files = a dictionary which has keys as filenames and values as file data
     # stream = returns a generator when enabled and just final response when disabled
@@ -171,7 +171,7 @@ perplexity_cookies = {
 async def test():
     perplexity_cli = await perplexity_async.Client(perplexity_cookies)
 
-    resp = await perplexity_cli.search('Your query here', mode='r1', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+    resp = await perplexity_cli.search('Your query here', mode='reasoning', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
     print(resp)
 
 asyncio.run(test())
@@ -191,7 +191,7 @@ async def test():
     perplexity_cli = await perplexity_async.Client()
     await perplexity_cli.create_account(emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed.
 
-    resp = await perplexity_cli.search('Your query here', mode='r1', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+    resp = await perplexity_cli.search('Your query here', mode='reasoning', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
     print(resp)
 
 asyncio.run(test())
