@@ -13,8 +13,6 @@ from websocket import WebSocketApp
 from .emailnator import Emailnator
 
 
-# https://dev.to/akarshan/asynchronous-python-magic-how-to-create-awaitable-constructors-with-asyncmixin-18j5
-# https://web.archive.org/web/20230915163459/https://dev.to/akarshan/asynchronous-python-magic-how-to-create-awaitable-constructors-with-asyncmixin-18j5
 class AsyncMixin:
     def __init__(self, *args, **kwargs):
         self.__storedargs = args, kwargs
@@ -26,6 +24,7 @@ class AsyncMixin:
     async def __initobj(self):
         assert not self.async_initialized
         self.async_initialized = True
+        
         # pass the parameters to __ainit__ that passed to __init__
         await self.__ainit__(*self.__storedargs[0], **self.__storedargs[1])
         return self
@@ -64,7 +63,6 @@ class Client(AsyncMixin):
         self.file_upload = 0 if not cookies else float('inf')
         self.message_counter = 1
         self.signin_regex = re.compile(r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
-        self.last_answer = None
         self.last_file_upload_info = None
         self.timestamp = format(random.getrandbits(32), '08x')
         self.sid = json.loads((await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}')).text[1:])['sid']
@@ -163,33 +161,26 @@ class Client(AsyncMixin):
         elif message.startswith(str(self.message_counter + 430)):
             response = json.loads(message[len(str(self.message_counter + 430)):])[0]
             
-            if 'text' in response:
-                response['text'] = json.loads(response['text'])
-                self.last_answer = response
-            elif 'fields' in response:
+            if 'fields' in response:
                 self.last_file_upload_info = response
-        
-        elif message.startswith('42'):
-            self.last_answer = json.loads(message[2:])[1]
     
     async def search(self, query, mode='auto', sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False):
         '''
         Query function
         '''
-        assert mode in ['auto', 'pro', 'deep research', 'r1', 'o3-mini'], 'Search modes -> ["auto", "pro", "deep research", "r1", "o3-mini"]'
+        assert mode in ['auto', 'pro', 'reasoning', 'deep research'], 'Search modes -> ["auto", "pro", "reasoning", "deep research"]'
         assert all([source in ('web', 'scholar', 'social') for source in sources]), 'Sources -> ["web", "scholar", "social"]'
-        assert self.copilot > 0 if mode in ['pro', 'deep research', 'r1', 'o3-mini'] else True, 'You have used all of your enhanced (pro) queries'
+        assert self.copilot > 0 if mode in ['pro', 'reasoning', 'deep research'] else True, 'You have used all of your enhanced (pro) queries'
         assert self.file_upload - len(files) >= 0 if files else True, f'You have tried to upload {len(files)} files but you have {self.file_upload} file upload(s) remaining.'
         
-        self.copilot = self.copilot - 1 if mode in ['pro', 'r1', 'o3-mini'] else self.copilot
+        self.copilot = self.copilot - 1 if mode in ['pro', 'reasoning', 'deep research'] else self.copilot
         self.file_upload = self.file_upload - len(files) if files else self.file_upload
-        self.message_counter += 1
-        self.last_answer = None
         self.last_file_upload_info = None
         
         uploaded_files = []
         
         for filename, file in files.items():
+            self.message_counter += 1
             self.ws.send(f'{self.message_counter + 420}' + json.dumps([
                 'get_upload_url',
                 {
@@ -202,7 +193,6 @@ class Client(AsyncMixin):
             
             while not self.last_file_upload_info:
                 await asyncio.sleep(0.01)
-            self.message_counter += 1
             
             if not self.last_file_upload_info['success']:
                 raise Exception('File upload error', self.last_file_upload_info)
@@ -221,49 +211,52 @@ class Client(AsyncMixin):
             
             uploaded_files.append(self.last_file_upload_info['url'] + self.last_file_upload_info['fields']['key'].replace('${filename}', filename))
         
-        self.ws.send(f'{self.message_counter + 420}' + json.dumps([
-            'perplexity_ask',
-            query,
-            {
-                'attachments': uploaded_files + follow_up['attachments'] if follow_up else uploaded_files,
-                'frontend_context_uuid': str(uuid4()),
-                'frontend_uuid': str(uuid4()),
-                'is_incognito': incognito,
-                'language': language,
-                'last_backend_uuid': follow_up['backend_uuid'] if follow_up else None,
-                'mode': 'concise' if mode == 'auto' else 'copilot',
-                'model_preference': {'auto': None, 'pro': None, 'deep research': 'pplx_alpha', 'r1': 'r1', 'o3-mini': 'o3mini'}[mode],
-                'source': 'default',
-                'sources': sources,
-                'version': '2.18'
+        json_data = {
+            'query_str': query,
+            'params':
+                {
+                    'attachments': uploaded_files + follow_up['attachments'] if follow_up else uploaded_files,
+                    'frontend_context_uuid': str(uuid4()),
+                    'frontend_uuid': str(uuid4()),
+                    'is_incognito': incognito,
+                    'language': language,
+                    'last_backend_uuid': follow_up['backend_uuid'] if follow_up else None,
+                    'mode': 'concise' if mode == 'auto' else 'copilot',
+                    'model_preference': {'auto': None, 'pro': None, 'reasoning': 'pplx_reasoning', 'deep research': 'pplx_alpha'}[mode],
+                    'source': 'default',
+                    'sources': sources,
+                    'version': '2.18'
+                }
             }
-        ]))
         
-        async def stream_response(self):
-            answer = None
-            
-            while True:
-                if self.last_answer != answer:
-                    answer = self.last_answer
-                    yield answer
+        resp = await self.session.post('https://www.perplexity.ai/rest/sse/perplexity_ask', json=json_data, stream=True)
+        chunks = []
+        
+        async def stream_response(resp):
+            async for chunk in resp.aiter_lines(delimiter=b'\r\n\r\n'):
+                content = chunk.decode('utf-8')
                 
-                if self.last_answer['status'] == 'completed':
-                    answer = self.last_answer
-                    self.last_answer = None
+                if content.startswith('event: message\r\n'):
+                    content_json = json.loads(content[len('event: message\r\ndata: '):])
+                    content_json['text'] = json.loads(content_json['text'])
                     
-                    yield answer
+                    chunks.append(content_json)
+                    yield chunks[-1]
+                
+                elif content.startswith('event: end_of_stream\r\n'):
                     return
-                
-                await asyncio.sleep(0.01)
         
-        while True:
-            if self.last_answer and stream:
-                return stream_response(self)
+        if stream:
+            return stream_response(resp)
+        
+        async for chunk in resp.aiter_lines(delimiter=b'\r\n\r\n'):
+            content = chunk.decode('utf-8')
             
-            elif self.last_answer and self.last_answer['status'] == 'completed':
-                answer = self.last_answer
-                self.last_answer = None
+            if content.startswith('event: message\r\n'):
+                content_json = json.loads(content[len('event: message\r\ndata: '):])
+                content_json['text'] = json.loads(content_json['text'])
                 
-                return answer
+                chunks.append(content_json)
             
-            await asyncio.sleep(0.01)
+            elif content.startswith('event: end_of_stream\r\n'):
+                return chunks[-1]
