@@ -40,6 +40,7 @@ class Client:
             'upgrade-insecure-requests': '1',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
         }, cookies=cookies)
+        self.own = bool(cookies)
         self.copilot = 0 if not cookies else float('inf')
         self.file_upload = 0 if not cookies else float('inf')
         self.message_counter = 1
@@ -145,11 +146,22 @@ class Client:
             if 'fields' in response:
                 self.last_file_upload_info = response
     
-    def search(self, query, mode='auto', sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False):
+    def search(self, query, mode='auto', model=None, sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False):
         '''
         Query function
         '''
         assert mode in ['auto', 'pro', 'reasoning', 'deep research'], 'Search modes -> ["auto", "pro", "reasoning", "deep research"]'
+        assert model in {
+            'auto': [None],
+            'pro': ['sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
+            'reasoning': ['r1', 'o3-mini', 'claude 3.7 sonnet'],
+            'deep research': [None]
+        }[mode] if self.own else True, '''Models for modes -> {
+    'auto': [None],
+    'pro': ['sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
+    'reasoning': ['r1', 'o3-mini', 'claude 3.7 sonnet'],
+    'deep research': [None]
+}'''
         assert all([source in ('web', 'scholar', 'social') for source in sources]), 'Sources -> ["web", "scholar", "social"]'
         assert self.copilot > 0 if mode in ['pro', 'reasoning', 'deep research'] else True, 'You have used all of your enhanced (pro) queries'
         assert self.file_upload - len(files) >= 0 if files else True, f'You have tried to upload {len(files)} files but you have {self.file_upload} file upload(s) remaining.'
@@ -203,7 +215,32 @@ class Client:
                     'language': language,
                     'last_backend_uuid': follow_up['backend_uuid'] if follow_up else None,
                     'mode': 'concise' if mode == 'auto' else 'copilot',
-                    'model_preference': {'auto': None, 'pro': None, 'reasoning': 'pplx_reasoning', 'deep research': 'pplx_alpha'}[mode],
+                    'model_preference': {
+                        'auto': 'turbo',
+                        'pro': 'pplx_pro',
+                        'reasoning': 'pplx_reasoning',
+                        'deep research': 'pplx_alpha'
+                    }[mode] if not self.own else {
+                            'auto': {
+                                None: 'turbo'
+                            },
+                            'pro': {
+                                'sonar': 'experimental',
+                                'gpt-4.5': 'gpt45',
+                                'gpt-4o': 'gpt4o',
+                                'claude 3.7 sonnet': 'claude2',
+                                'gemini 2.0 flash': 'gemini2flash',
+                                'grok-2': 'grok'
+                            },
+                            'reasoning': {
+                                'r1': 'r1',
+                                'o3-mini': 'o3mini',
+                                'claude 3.7 sonnet': 'claude37sonnetthinking'
+                            },
+                            'deep research': {
+                                None: 'pplx_alpha'
+                            }
+                        }[mode][model],
                     'source': 'default',
                     'sources': sources,
                     'version': '2.18'
