@@ -221,26 +221,26 @@ class Client:
                         'reasoning': 'pplx_reasoning',
                         'deep research': 'pplx_alpha'
                     }[mode] if not self.own else {
-                            'auto': {
-                                None: 'turbo'
-                            },
-                            'pro': {
-                                'sonar': 'experimental',
-                                'gpt-4.5': 'gpt45',
-                                'gpt-4o': 'gpt4o',
-                                'claude 3.7 sonnet': 'claude2',
-                                'gemini 2.0 flash': 'gemini2flash',
-                                'grok-2': 'grok'
-                            },
-                            'reasoning': {
-                                'r1': 'r1',
-                                'o3-mini': 'o3mini',
-                                'claude 3.7 sonnet': 'claude37sonnetthinking'
-                            },
-                            'deep research': {
-                                None: 'pplx_alpha'
-                            }
-                        }[mode][model],
+                        'auto': {
+                            None: 'turbo'
+                        },
+                        'pro': {
+                            'sonar': 'experimental',
+                            'gpt-4.5': 'gpt45',
+                            'gpt-4o': 'gpt4o',
+                            'claude 3.7 sonnet': 'claude2',
+                            'gemini 2.0 flash': 'gemini2flash',
+                            'grok-2': 'grok'
+                        },
+                        'reasoning': {
+                            'r1': 'r1',
+                            'o3-mini': 'o3mini',
+                            'claude 3.7 sonnet': 'claude37sonnetthinking'
+                        },
+                        'deep research': {
+                            None: 'pplx_alpha'
+                        }
+                    }[mode][model],
                     'source': 'default',
                     'sources': sources,
                     'version': '2.18'
