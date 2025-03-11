@@ -68,13 +68,19 @@ import perplexity
 perplexity_cli = perplexity.Client()
 
 # mode = ['auto', 'pro', 'reasoning', 'deep research']
+# model = model for mode, which can only be used in own accounts, that is {
+#     'auto': [None],
+#     'pro': ['sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
+#     'reasoning': ['r1', 'o3-mini', 'claude 3.7 sonnet'],
+#     'deep research': [None]
+# }
 # sources = ['web', 'scholar', 'social']
 # files = a dictionary which has keys as filenames and values as file data
 # stream = returns a generator when enabled and just final response when disabled
 # language = ISO 639 code of language you want to use
 # follow_up = last query info for follow-up queries, you can directly pass response from a query, look at second example below
 # incognito = Enables incognito mode, for people who are using their own account
-resp = perplexity_cli.search('Your query here', mode='auto', sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False)
+resp = perplexity_cli.search('Your query here', mode='auto', model=None, sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 
 # second example to show how to use follow-up queries and stream response
@@ -93,7 +99,7 @@ perplexity_cookies = {
 
 perplexity_cli = perplexity.Client(perplexity_cookies)
 
-resp = perplexity_cli.search('Your query here', mode='reasoning', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+resp = perplexity_cli.search('Your query here', mode='reasoning', model='o3-mini', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 ```
 
@@ -109,7 +115,7 @@ emailnator_cookies = {
 perplexity_cli = perplexity.Client()
 perplexity_cli.create_account(emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed.
 
-resp = perplexity_cli.search('Your query here', mode='reasoning', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+resp = perplexity_cli.search('Your query here', mode='reasoning', model=None, sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 ```
 
@@ -142,13 +148,19 @@ async def test():
     perplexity_cli = await perplexity_async.Client()
 
     # mode = ['auto', 'pro', 'reasoning', 'deep research']
+    # model = model for mode, which can only be used in own accounts, that is {
+    #     'auto': [None],
+    #     'pro': ['sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
+    #     'reasoning': ['r1', 'o3-mini', 'claude 3.7 sonnet'],
+    #     'deep research': [None]
+    # }
     # sources = ['web', 'scholar', 'social']
     # files = a dictionary which has keys as filenames and values as file data
     # stream = returns a generator when enabled and just final response when disabled
     # language = ISO 639 code of language you want to use
     # follow_up = last query info for follow-up queries, you can directly pass response from a query, look at second example below
     # incognito = Enables incognito mode, for people who are using their own account
-    resp = await perplexity_cli.search('Your query here', mode='auto', sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False)
+    resp = await perplexity_cli.search('Your query here', mode='auto', model=None, sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False)
     print(resp)
 
     # second example to show how to use follow-up queries and stream response
@@ -171,7 +183,7 @@ perplexity_cookies = {
 async def test():
     perplexity_cli = await perplexity_async.Client(perplexity_cookies)
 
-    resp = await perplexity_cli.search('Your query here', mode='reasoning', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+    resp = await perplexity_cli.search('Your query here', mode='reasoning', model='o3-mini', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
     print(resp)
 
 asyncio.run(test())
@@ -191,7 +203,7 @@ async def test():
     perplexity_cli = await perplexity_async.Client()
     await perplexity_cli.create_account(emailnator_cookies) # Creates a new gmail, so your 5 pro queries will be renewed.
 
-    resp = await perplexity_cli.search('Your query here', mode='reasoning', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+    resp = await perplexity_cli.search('Your query here', mode='reasoning', model=None, sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
     print(resp)
 
 asyncio.run(test())
