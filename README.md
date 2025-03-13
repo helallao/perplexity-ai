@@ -70,8 +70,8 @@ perplexity_cli = perplexity.Client()
 # mode = ['auto', 'pro', 'reasoning', 'deep research']
 # model = model for mode, which can only be used in own accounts, that is {
 #     'auto': [None],
-#     'pro': ['sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
-#     'reasoning': ['r1', 'o3-mini', 'claude 3.7 sonnet'],
+#     'pro': [None, 'sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
+#     'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet'],
 #     'deep research': [None]
 # }
 # sources = ['web', 'scholar', 'social']
@@ -150,8 +150,8 @@ async def test():
     # mode = ['auto', 'pro', 'reasoning', 'deep research']
     # model = model for mode, which can only be used in own accounts, that is {
     #     'auto': [None],
-    #     'pro': ['sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
-    #     'reasoning': ['r1', 'o3-mini', 'claude 3.7 sonnet'],
+    #     'pro': [None, 'sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
+    #     'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet'],
     #     'deep research': [None]
     # }
     # sources = ['web', 'scholar', 'social']
