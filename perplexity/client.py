@@ -153,13 +153,13 @@ class Client:
         assert mode in ['auto', 'pro', 'reasoning', 'deep research'], 'Search modes -> ["auto", "pro", "reasoning", "deep research"]'
         assert model in {
             'auto': [None],
-            'pro': ['sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
-            'reasoning': ['r1', 'o3-mini', 'claude 3.7 sonnet'],
+            'pro': [None, 'sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
+            'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet'],
             'deep research': [None]
         }[mode] if self.own else True, '''Models for modes -> {
     'auto': [None],
-    'pro': ['sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
-    'reasoning': ['r1', 'o3-mini', 'claude 3.7 sonnet'],
+    'pro': [None, 'sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
+    'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet'],
     'deep research': [None]
 }'''
         assert all([source in ('web', 'scholar', 'social') for source in sources]), 'Sources -> ["web", "scholar", "social"]'
@@ -216,15 +216,11 @@ class Client:
                     'last_backend_uuid': follow_up['backend_uuid'] if follow_up else None,
                     'mode': 'concise' if mode == 'auto' else 'copilot',
                     'model_preference': {
-                        'auto': 'turbo',
-                        'pro': 'pplx_pro',
-                        'reasoning': 'pplx_reasoning',
-                        'deep research': 'pplx_alpha'
-                    }[mode] if not self.own else {
                         'auto': {
                             None: 'turbo'
                         },
                         'pro': {
+                            None: 'pplx_pro',
                             'sonar': 'experimental',
                             'gpt-4.5': 'gpt45',
                             'gpt-4o': 'gpt4o',
@@ -233,6 +229,7 @@ class Client:
                             'grok-2': 'grok'
                         },
                         'reasoning': {
+                            None: 'pplx_reasoning',
                             'r1': 'r1',
                             'o3-mini': 'o3mini',
                             'claude 3.7 sonnet': 'claude37sonnetthinking'
