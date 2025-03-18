@@ -1,25 +1,10 @@
 # Perplexity
 This module uses [emailnator](https://emailnator.com/) to generate new accounts. As you know, when you create a new account, you will have 5 pro queries. This module will generate you new gmails with [emailnator](https://emailnator.com/) and you will have unlimited pro queries.
 
-## Requirements
+## How to Install
 
-<details>
-<summary>Click to expand</summary>
-<br>
-
-* [curl_cffi](https://pypi.org/project/curl-cffi/)
-* [websocket-client](https://pypi.org/project/websocket-client/)
-* [patchright](https://pypi.org/project/patchright/) & [playwright](https://pypi.org/project/playwright/) (if you are going to use web interface)
-
-
-Install requirements with:
 ```sh
-pip install -r requirements.txt
-```
-
-or with single-line command:
-```sh
-pip install curl_cffi websocket-client
+pip install perplexity-api perplexity-api-async
 ```
 
 and patchright if you are going to use web interface
@@ -27,9 +12,6 @@ and patchright if you are going to use web interface
 ```sh
 pip install patchright playwright && patchright install chromium
 ```
-
-</details>
-
 
 ## How To Use Web Interface
 If you're just a normal user who wants to use Perplexity Pro/Reasoning unlimited and not interested in using Perplexity API in python codes, then you can use Web Interface feature. It will simply create accounts in background for you and when you run out of copilots, the new account will automatically open in new tab. [Patchright](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-python#best-practices) uses [chrome user data directory](https://www.google.com/search?q=chrome+user+data+directory) to be completely undetected, it's mostly ``C:\Users\YourName\AppData\Local\Google\Chrome\User Data`` for Windows, as shown below,
