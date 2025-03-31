@@ -1,14 +1,10 @@
 import re
-import ssl
+import sys
 import json
-import time
-import socket
 import random
 import mimetypes
 from uuid import uuid4
-from threading import Thread
 from curl_cffi import requests, CurlMime
-from websocket import WebSocketApp
 
 from .emailnator import Emailnator
 
@@ -43,33 +39,12 @@ class Client:
         self.own = bool(cookies)
         self.copilot = 0 if not cookies else float('inf')
         self.file_upload = 0 if not cookies else float('inf')
-        self.message_counter = 1
         self.signin_regex = re.compile(r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
-        self.last_file_upload_info = None
         self.timestamp = format(random.getrandbits(32), '08x')
         self.sid = json.loads(self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}').text[1:])['sid']
         
         assert self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
         self.session.get('https://www.perplexity.ai/api/auth/session')
-        
-        context = ssl.create_default_context()
-        context.minimum_version = ssl.TLSVersion.TLSv1_3
-        self.sock = context.wrap_socket(socket.create_connection(('www.perplexity.ai', 443)), server_hostname='www.perplexity.ai')
-        
-        self.ws = WebSocketApp(
-            url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
-            header={'User-Agent': self.session.headers['User-Agent']},
-            cookie='; '.join([f'{key}={value}' for key, value in self.session.cookies.get_dict().items()]),
-            on_open=lambda ws: (ws.send('2probe'), ws.send('5')),
-            on_message=self._on_message,
-            on_error=lambda ws, error: print(f'Websocket Error: {error}'),
-            socket=self.sock
-        )
-        
-        Thread(target=self.ws.run_forever, daemon=True).start()
-        
-        while not (self.ws.sock and self.ws.sock.connected):
-            time.sleep(0.01)
     
     def create_account(self, cookies):
         '''
@@ -105,46 +80,11 @@ class Client:
         self.copilot = 5
         self.file_upload = 10
         
-        self.ws.close()
-        del self.sock
-        
         self.sid = json.loads(self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}').text[1:])['sid']
         
         assert self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
         
-        context = ssl.create_default_context()
-        context.minimum_version = ssl.TLSVersion.TLSv1_3
-        self.sock = context.wrap_socket(socket.create_connection(('www.perplexity.ai', 443)), server_hostname='www.perplexity.ai')
-        
-        self.ws = WebSocketApp(
-            url=f'wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket&sid={self.sid}',
-            header={'User-Agent': self.session.headers['User-Agent']},
-            cookie='; '.join([f'{key}={value}' for key, value in self.session.cookies.get_dict().items()]),
-            on_open=lambda ws: (ws.send('2probe'), ws.send('5')),
-            on_message=self._on_message,
-            on_error=lambda ws, error: print(f'Websocket Error: {error}'),
-            socket=self.sock
-        )
-        
-        Thread(target=self.ws.run_forever).start()
-        
-        while not (self.ws.sock and self.ws.sock.connected):
-            time.sleep(0.01)
-        
         return True
-    
-    def _on_message(self, ws, message):
-        '''
-        Websocket message handler
-        '''
-        if message == '2':
-            ws.send('3')
-        
-        elif message.startswith(str(self.message_counter + 430)):
-            response = json.loads(message[len(str(self.message_counter + 430)):])[0]
-            
-            if 'fields' in response:
-                self.last_file_upload_info = response
     
     def search(self, query, mode='auto', model=None, sources=['web'], files={}, stream=False, language='en-US', follow_up=None, incognito=False):
         '''
@@ -168,41 +108,31 @@ class Client:
         
         self.copilot = self.copilot - 1 if mode in ['pro', 'reasoning', 'deep research'] else self.copilot
         self.file_upload = self.file_upload - len(files) if files else self.file_upload
-        self.last_file_upload_info = None
         
         uploaded_files = []
         
         for filename, file in files.items():
-            self.message_counter += 1
-            self.ws.send(f'{self.message_counter + 420}' + json.dumps([
-                'get_upload_url',
-                {
-                    'content_type': mimetypes.guess_type(filename)[0],
-                    'filename': filename,
-                    'source': 'default',
-                    'version': '2.18'
-                }
-            ]))
-            
-            while not self.last_file_upload_info:
-                time.sleep(0.01)
-            
-            if not self.last_file_upload_info['success']:
-                raise Exception('File upload error', self.last_file_upload_info)
+            file_upload_info = self.session.post('https://www.perplexity.ai/rest/uploads/create_upload_url?version=2.18&source=default', json={
+                'content_type': mimetypes.guess_type(filename)[0],
+                'file_size': sys.getsizeof(file),
+                'filename': filename,
+                'force_image': False,
+                'source': 'default',
+            }).json()
             
             mp = CurlMime()
             
-            for key, value in self.last_file_upload_info['fields'].items():
+            for key, value in file_upload_info['fields'].items():
                 mp.addpart(name=key, data=value)
             
             mp.addpart(name='file', content_type=mimetypes.guess_type(filename)[0], filename=filename, data=file)
             
-            upload_resp = self.session.post(self.last_file_upload_info['url'], multipart=mp)
+            upload_resp = self.session.post(file_upload_info['s3_bucket_url'], multipart=mp)
             
             if not upload_resp.ok:
                 raise Exception('File upload error', upload_resp)
             
-            uploaded_files.append(self.last_file_upload_info['url'] + self.last_file_upload_info['fields']['key'].replace('${filename}', filename))
+            uploaded_files.append(upload_resp.json()['secure_url'])
         
         json_data = {
             'query_str': query,
