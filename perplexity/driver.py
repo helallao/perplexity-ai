@@ -130,7 +130,7 @@ class Driver:
         
         elif '/rest/rate-limit' in request.url:
             route.continue_()
-            gpt4_limit = requests.get('https://www.perplexity.ai/rest/rate-limit?version=2.18&source=default', headers=request.headers).json()['remaining']
+            gpt4_limit = request.response().json()['remaining']
             
             if not self.creating_new_account and gpt4_limit == 0:
                 self.creating_new_account = True
