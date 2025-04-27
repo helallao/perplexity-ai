@@ -132,27 +132,38 @@ class Client(AsyncMixin):
         uploaded_files = []
         
         for filename, file in files.items():
-            file_upload_info = (await self.session.post('https://www.perplexity.ai/rest/uploads/create_upload_url?version=2.18&source=default', json={
-                'content_type': mimetypes.guess_type(filename)[0],
-                'file_size': sys.getsizeof(file),
-                'filename': filename,
-                'force_image': False,
-                'source': 'default',
-            })).json()
-            
+            file_type = mimetypes.guess_type(filename)[0]
+            file_upload_info = (await self.session.post(
+                'https://www.perplexity.ai/rest/uploads/create_upload_url?version=2.18&source=default',
+                json={
+                    'content_type': file_type,
+                    'file_size': sys.getsizeof(file),
+                    'filename': filename,
+                    'force_image': False,
+                    'source': 'default',
+                }
+            )).json()
+
             mp = CurlMime()
-            
             for key, value in file_upload_info['fields'].items():
                 mp.addpart(name=key, data=value)
-            
-            mp.addpart(name='file', content_type=mimetypes.guess_type(filename)[0], filename=filename, data=file)
-            
+            mp.addpart(name='file', content_type=file_type, filename=filename, data=file)
+
             upload_resp = await self.session.post(file_upload_info['s3_bucket_url'], multipart=mp)
             
             if not upload_resp.ok:
                 raise Exception('File upload error', upload_resp)
-            
-            uploaded_files.append(upload_resp.json()['secure_url'])
+
+            if 'image/upload' in file_upload_info['s3_object_url']:
+                uploaded_url = re.sub(
+                    r'/private/s--.*?--/v\d+/user_uploads/',
+                    '/private/user_uploads/',
+                    upload_resp.json()['secure_url']
+                )
+            else:
+                uploaded_url = file_upload_info['s3_object_url']
+
+            uploaded_files.append(uploaded_url)
         
         json_data = {
             'query_str': query,
