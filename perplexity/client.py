@@ -113,7 +113,7 @@ class Client:
         
         for filename, file in files.items():
             file_type = mimetypes.guess_type(filename)[0]
-            file_upload_info = (await self.session.post(
+            file_upload_info = (self.session.post(
                 'https://www.perplexity.ai/rest/uploads/create_upload_url?version=2.18&source=default',
                 json={
                     'content_type': file_type,
@@ -129,12 +129,12 @@ class Client:
                 mp.addpart(name=key, data=value)
             mp.addpart(name='file', content_type=file_type, filename=filename, data=file)
 
-            upload_resp = await self.session.post(file_upload_info['s3_bucket_url'], multipart=mp)
+            upload_resp = self.session.post(file_upload_info['s3_bucket_url'], multipart=mp)
             
             if not upload_resp.ok:
                 raise Exception('File upload error', upload_resp)
 
-            if 'image/upload' in file_upload_info['s3_bucket_url']:
+            if 'image/upload' in file_upload_info['s3_object_url']:
                 uploaded_url = re.sub(
                     r'/private/s--.*?--/v\d+/user_uploads/',
                     '/private/user_uploads/',
