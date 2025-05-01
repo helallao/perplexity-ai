@@ -35,15 +35,12 @@ class Client:
             'sec-fetch-user': '?1',
             'upgrade-insecure-requests': '1',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-        }, cookies=cookies)
+        }, cookies=cookies, impersonate='chrome')
         self.own = bool(cookies)
         self.copilot = 0 if not cookies else float('inf')
         self.file_upload = 0 if not cookies else float('inf')
         self.signin_regex = re.compile(r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
         self.timestamp = format(random.getrandbits(32), '08x')
-        self.sid = json.loads(self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}').text[1:])['sid']
-        
-        assert self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
         self.session.get('https://www.perplexity.ai/api/auth/session')
     
     def create_account(self, cookies):
@@ -79,10 +76,6 @@ class Client:
         
         self.copilot = 5
         self.file_upload = 10
-        
-        self.sid = json.loads(self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}').text[1:])['sid']
-        
-        assert self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}').text == 'OK'
         
         return True
     
