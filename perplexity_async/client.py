@@ -61,9 +61,6 @@ class Client(AsyncMixin):
         self.file_upload = 0 if not cookies else float('inf')
         self.signin_regex = re.compile(r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"')
         self.timestamp = format(random.getrandbits(32), '08x')
-        self.sid = json.loads((await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}')).text[1:])['sid']
-        
-        assert (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text == 'OK'
         await self.session.get('https://www.perplexity.ai/api/auth/session')
     
     async def create_account(self, cookies):
@@ -99,10 +96,6 @@ class Client(AsyncMixin):
         
         self.copilot = 5
         self.file_upload = 10
-        
-        self.sid = json.loads((await self.session.get(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}')).text[1:])['sid']
-        
-        assert (await self.session.post(f'https://www.perplexity.ai/socket.io/?EIO=4&transport=polling&t={self.timestamp}&sid={self.sid}', data='40{"jwt":"anonymous-ask-user"}')).text == 'OK'
         
         return True
     
