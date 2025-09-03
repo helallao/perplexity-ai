@@ -87,11 +87,11 @@ class Client:
         assert model in {
             'auto': [None],
              'pro': [None, 'sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
-            'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet', 'gpt5', 'gpt5_thinking', 'claude37somethinking'],
+            'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet', 'gpt5', 'gpt5_thinking', 'claude37sonnetthinking'],
             'deep research': [None]
              }[mode] if self.own else True, '''Models for modes -> {'auto': [None],
              'pro': [None, 'sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
-            'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet', 'gpt5', 'gpt5_thinking', 'claude37somethinking'],
+            'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet', 'gpt5', 'gpt5_thinking', 'claude37sonnetthinking'],
             'deep research': [None]
              }'''
         assert all([source in ('web', 'scholar', 'social') for source in sources]), 'Sources -> ["web", "scholar", "social"]'
@@ -165,7 +165,7 @@ class Client:
                             None: 'pplx_reasoning',
                             'r1': 'r1',
                             'o3-mini': 'o3mini',
-                            'claude 3.7 sonnet': 'claude37sonnethinking',
+                            'claude 3.7 sonnet': 'claude37sonnetthinking',
                             'gpt5': 'gpt5',
                             'gpt5_thinking': 'gpt5thinking',
                         },
