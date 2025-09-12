@@ -143,7 +143,7 @@ async def test():
 asyncio.run(test())
 ```
 
-And this is how you use your own account, you need to get your cookies in order to use your own account. Look at [How To Get The Cookies](#how-to-get-the-cookies),
+And this is how you use your own account, you need to get your cookies in order to use your own account. Look at [How To Get Cookies](#how-to-get-cookies),
 
 ```python3
 import asyncio
@@ -162,7 +162,7 @@ async def test():
 asyncio.run(test())
 ```
 
-And finally account generating, you need to get cookies for [emailnator](https://emailnator.com/) to use this feature. Look at [How To Get The Cookies](#how-to-get-the-cookies),
+And finally account generating, you need to get cookies for [emailnator](https://emailnator.com/) to use this feature. Look at [How To Get Cookies](#how-to-get-cookies),
 
 ```python3
 import asyncio
