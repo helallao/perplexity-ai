@@ -57,11 +57,10 @@ import perplexity
 
 perplexity_cli = perplexity.Client()
 
-# mode = ['auto', 'pro', 'reasoning', 'deep research']
 # model = model for mode, which can only be used in own accounts, that is {
 #     'auto': [None],
-#     'pro': [None, 'sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
-#     'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet'],
+#     'pro': [None, 'sonar', 'gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
+#     'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
 #     'deep research': [None]
 # }
 # sources = ['web', 'scholar', 'social']
@@ -89,7 +88,7 @@ perplexity_cookies = {
 
 perplexity_cli = perplexity.Client(perplexity_cookies)
 
-resp = perplexity_cli.search('Your query here', mode='reasoning', model='o3-mini', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+resp = perplexity_cli.search('Your query here', mode='reasoning', model='o3', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 ```
 
@@ -123,8 +122,8 @@ async def test():
     # mode = ['auto', 'pro', 'reasoning', 'deep research']
     # model = model for mode, which can only be used in own accounts, that is {
     #     'auto': [None],
-    #     'pro': [None, 'sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
-    #     'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet'],
+    #     'pro': [None, 'sonar', 'gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
+    #     'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
     #     'deep research': [None]
     # }
     # sources = ['web', 'scholar', 'social']
@@ -156,7 +155,7 @@ perplexity_cookies = {
 async def test():
     perplexity_cli = await perplexity_async.Client(perplexity_cookies)
 
-    resp = await perplexity_cli.search('Your query here', mode='reasoning', model='o3-mini', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+    resp = await perplexity_cli.search('Your query here', mode='reasoning', model='o3', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
     print(resp)
 
 asyncio.run(test())
