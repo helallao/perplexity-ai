@@ -108,13 +108,13 @@ class Client(AsyncMixin):
         assert mode in ['auto', 'pro', 'reasoning', 'deep research'], 'Search modes -> ["auto", "pro", "reasoning", "deep research"]'
         assert model in {
             'auto': [None],
-            'pro': [None, 'sonar', 'gpt-5', 'gpt-5.1', 'claude-4.5-sonnet', 'claude-4.0-sonnet', 'gemini-2.5-pro', 'grok-2'],
-            'reasoning': [None, 'o3', 'gpt-5.1-thinking', 'claude-4.5-sonnet-thinking', 'claude-4.0-sonnet-thinking', 'grok-4'],
+            'pro': [None, 'sonar', 'gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
+            'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
             'deep research': [None]
         }[mode] if self.own else True, '''Models for modes -> {
         'auto': [None],
-        'pro': [None, 'sonar', 'gpt-5', 'gpt-5.1', 'claude-4.5-sonnet', 'claude-4.0-sonnet', 'gemini-2.5-pro', 'grok-2'],
-        'reasoning': [None, 'o3', 'gpt-5.1-thinking', 'claude-4.5-sonnet-thinking', 'claude-4.0-sonnet-thinking', 'grok-4'],
+        'pro': [None, 'sonar','gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
+        'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
         'deep research': [None]
 }'''
         assert all([source in ('web', 'scholar', 'social') for source in sources]), 'Sources -> ["web", "scholar", "social"]'
@@ -178,20 +178,15 @@ class Client(AsyncMixin):
                         'pro': {
                             None: 'pplx_pro',
                             'sonar': 'experimental',
-                            'gpt-5': 'gpt5',
                             'gpt-5.1': 'gpt51',
                             'claude-4.5-sonnet': 'claude45sonnet',
-                            'claude-4.0-sonnet': 'claude40sonnet',
                             'gemini-2.5-pro': 'gemini25pro',
-                            'grok-2': 'grok2'
+                            'grok-4': 'grok4'
                         },
                         'reasoning': {
                             None: 'pplx_reasoning',
                             'o3': 'o3',
-                            'gpt-5.1-thinking': 'gpt51thinking',
                             'claude-4.5-sonnet-thinking': 'claude45sonnetthinking',
-                            'claude-4.0-sonnet-thinking': 'claude40sonnetthinking',
-                            'grok-4': 'grok4'
                         },
                         'deep research': {
                             None: 'pplx_alpha'
