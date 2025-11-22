@@ -105,19 +105,18 @@ class Client(AsyncMixin):
         '''
         Query function
         '''
-        assert mode in ['auto', 'pro', 'reasoning', 'deep research', 'copilot'], 'Search modes -> ["auto", "pro", "reasoning", "deep research", "copilot"]'
+        assert mode in ['auto', 'pro', 'reasoning', 'deep research'], 'Search modes -> ["auto", "pro", "reasoning", "deep research"]'
         assert model in {
             'auto': [None],
             'pro': [None, 'sonar', 'gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
-            'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
+            'reasoning': [None, 'gpt-5.1-thingking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking'],
             'deep research': [None],
             'copilot': [None, 'gemini-3.0-pro' ,'kimi-k2-thinking']
         }[mode] if self.own else True, '''Models for modes -> {
         'auto': [None],
         'pro': [None, 'sonar','gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
-        'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
+        'reasoning': [None, 'gpt-5.1-thingking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking'],
         'deep research': [None],
-        'copilot': [None, 'gemini-3.0-pro','kimi-k2-thinking']
 }'''
         assert all([source in ('web', 'scholar', 'social') for source in sources]), 'Sources -> ["web", "scholar", "social"]'
         assert self.copilot > 0 if mode in ['pro', 'reasoning', 'deep research'] else True, 'You have used all of your enhanced (pro) queries'
@@ -187,16 +186,13 @@ class Client(AsyncMixin):
                         },
                         'reasoning': {
                             None: 'pplx_reasoning',
-                            'o3': 'o3',
+                            'gpt-5.1-thingking': 'gpt51_thinking',
                             'claude-4.5-sonnet-thinking': 'claude45sonnetthinking',
+                            'gemini-3.0-pro': 'gemini30pro',
+                            'kimi-k2-thinking': 'kimik2thinking'
                         },
                         'deep research': {
                             None: 'pplx_alpha'
-                        },
-                         'copilot': {
-                            None: 'copilot',
-                            'gemini-3.0-pro': 'gemini30pro',
-                            'kimi-k2-thinking': 'kimik2thinking'
                         }
                     }[mode][model],
                     'source': 'default',
