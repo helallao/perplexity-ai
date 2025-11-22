@@ -111,13 +111,13 @@ class Client(AsyncMixin):
             'pro': [None, 'sonar', 'gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
             'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
             'deep research': [None],
-            'copilot': [None, 'kimik2thinking']
+            'copilot': [None, 'gemini-3.0-pro' ,'kimi-k2-thinking']
         }[mode] if self.own else True, '''Models for modes -> {
         'auto': [None],
         'pro': [None, 'sonar','gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
         'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
         'deep research': [None],
-        'copilot': [None, 'kimik2thinking']
+        'copilot': [None, 'gemini-3.0-pro','kimi-k2-thinking']
 }'''
         assert all([source in ('web', 'scholar', 'social') for source in sources]), 'Sources -> ["web", "scholar", "social"]'
         assert self.copilot > 0 if mode in ['pro', 'reasoning', 'deep research'] else True, 'You have used all of your enhanced (pro) queries'
@@ -195,7 +195,8 @@ class Client(AsyncMixin):
                         },
                          'copilot': {
                             None: 'copilot',
-                            'kimik2thinking': 'kimik2thinking'
+                            'gemini-3.0-pro': 'gemini30pro',
+                            'kimi-k2-thinking': 'kimik2thinking'
                         }
                     }[mode][model],
                     'source': 'default',
