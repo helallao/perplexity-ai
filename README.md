@@ -60,7 +60,7 @@ perplexity_cli = perplexity.Client()
 # model = model for mode, which can only be used in own accounts, that is {
 #     'auto': [None],
 #     'pro': [None, 'sonar', 'gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
-#     'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
+#     'reasoning': [None, 'gpt-5.1-thingking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking'],
 #     'deep research': [None]
 # }
 # sources = ['web', 'scholar', 'social']
@@ -123,7 +123,7 @@ async def test():
     # model = model for mode, which can only be used in own accounts, that is {
     #     'auto': [None],
     #     'pro': [None, 'sonar', 'gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
-    #     'reasoning': [None, 'o3', 'claude-4.5-sonnet-thinking'],
+    #     'reasoning': [None, 'gpt-5.1-thingking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking'],
     #     'deep research': [None]
     # }
     # sources = ['web', 'scholar', 'social']
