@@ -222,8 +222,8 @@ class Client:
 
                 if content.startswith('event: message\\r\\n'):
                     content_json = json.loads(content[len('event: message\\r\\ndata: '):])
-                    content_json['text'] = json.loads(content_json['text'])
-
+                    if 'text' in content_json:
+                        content_json['text'] = json.loads(content_json['text'])
                     chunks.append(content_json)
                     yield chunks[-1]
 
@@ -238,8 +238,8 @@ class Client:
 
             if content.startswith('event: message\\r\\n'):
                 content_json = json.loads(content[len('event: message\\r\\ndata: '):])
-                content_json['text'] = json.loads(content_json['text'])
-
+                if 'text' in content_json:
+                    content_json['text'] = json.loads(content_json['text'])
                 chunks.append(content_json)
 
             elif content.startswith('event: end_of_stream\\r\\n'):
