@@ -4,7 +4,7 @@ import perplexity
 client = perplexity.Client()
 
 # Fazer uma pergunta
-response = client.search('Explain quantum computing', mode='auto')
+response = client.search("Explain quantum computing", mode="auto")
 
 # Mostrar resposta
-print("Resposta:", response['answer'])
+print("Resposta:", response["answer"])

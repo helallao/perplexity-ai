@@ -33,24 +33,16 @@ class LabsClient:
         self.timestamp = format(random.getrandbits(32), "08x")
 
         # Establish a session with the Perplexity Labs API
-        poll_url = (
-            f"{ENDPOINT_SOCKET_IO}?EIO=4&transport=polling&t={self.timestamp}"
-        )
+        poll_url = f"{ENDPOINT_SOCKET_IO}?EIO=4&transport=polling&t={self.timestamp}"
         self.sid = json.loads(self.session.get(poll_url).text[1:])["sid"]
         self.last_answer = None  # Store the last response from the API
         self.history = []  # Maintain a history of queries and responses
 
         # Authenticate the session
         auth_url = (
-            f"{ENDPOINT_SOCKET_IO}?EIO=4&transport=polling"
-            f"&t={self.timestamp}&sid={self.sid}"
+            f"{ENDPOINT_SOCKET_IO}?EIO=4&transport=polling" f"&t={self.timestamp}&sid={self.sid}"
         )
-        assert (
-            self.session.post(
-                auth_url, data='40{"jwt":"anonymous-ask-user"}'
-            ).text
-            == "OK"
-        )
+        assert self.session.post(auth_url, data='40{"jwt":"anonymous-ask-user"}').text == "OK"
 
         # Set up a secure WebSocket connection
         context = ssl.create_default_context()
@@ -62,17 +54,13 @@ class LabsClient:
 
         # Initialize WebSocket client
         websocket_url = (
-            "wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket"
-            f"&sid={self.sid}"
+            "wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket" f"&sid={self.sid}"
         )
         self.ws = WebSocketApp(
             url=websocket_url,
             header={"User-Agent": self.session.headers["User-Agent"]},
             cookie="; ".join(
-                [
-                    f"{key}={value}"
-                    for key, value in self.session.cookies.get_dict().items()
-                ]
+                [f"{key}={value}" for key, value in self.session.cookies.get_dict().items()]
             ),
             on_open=lambda ws: (ws.send("2probe"), ws.send("5")),
             on_message=self._on_message,

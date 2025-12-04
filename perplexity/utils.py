@@ -59,9 +59,7 @@ def retry_with_backoff(
                 except exceptions as e:
                     attempt += 1
                     if attempt >= max_attempts:
-                        logger.error(
-                            f"Failed after {max_attempts} attempts: {e}"
-                        )
+                        logger.error(f"Failed after {max_attempts} attempts: {e}")
                         raise
 
                     wait_time = backoff_factor**attempt + random.uniform(0, 1)
@@ -143,9 +141,7 @@ def validate_search_params(
     """
     # Validate mode
     if mode not in SEARCH_MODES:
-        raise ValidationError(
-            f"Invalid mode '{mode}'. Must be one of: {', '.join(SEARCH_MODES)}"
-        )
+        raise ValidationError(f"Invalid mode '{mode}'. Must be one of: {', '.join(SEARCH_MODES)}")
 
     # Validate model
     if model is not None:
@@ -197,10 +193,7 @@ def validate_query_limits(
         >>> validate_query_limits(5, 10, "pro", 2)
     """
     # Check copilot queries
-    if (
-        mode in ["pro", "reasoning", "deep research"]
-        and copilot_remaining <= 0
-    ):
+    if mode in ["pro", "reasoning", "deep research"] and copilot_remaining <= 0:
         raise ValidationError(
             f"No remaining enhanced queries for mode '{mode}'. "
             f"Create a new account or use mode='auto'."
@@ -232,17 +225,13 @@ def validate_file_data(files: dict) -> None:
 
     for filename, data in files.items():
         if not isinstance(filename, str):
-            raise ValidationError(
-                f"Filename must be string, got {type(filename)}"
-            )
+            raise ValidationError(f"Filename must be string, got {type(filename)}")
 
         if not filename.strip():
             raise ValidationError("Filename cannot be empty")
 
         if not isinstance(data, (bytes, str)):
-            raise ValidationError(
-                f"File data must be bytes or string, got {type(data)}"
-            )
+            raise ValidationError(f"File data must be bytes or string, got {type(data)}")
 
 
 def sanitize_query(query: str) -> str:
@@ -306,15 +295,9 @@ def parse_nested_json_response(content_json: dict) -> dict:
 
                         if "answer" in final_content:
                             try:
-                                answer_data = json.loads(
-                                    final_content["answer"]
-                                )
-                                content_json["answer"] = answer_data.get(
-                                    "answer", ""
-                                )
-                                content_json["chunks"] = answer_data.get(
-                                    "chunks", []
-                                )
+                                answer_data = json.loads(final_content["answer"])
+                                content_json["answer"] = answer_data.get("answer", "")
+                                content_json["chunks"] = answer_data.get("chunks", [])
                             except (json.JSONDecodeError, TypeError):
                                 pass
                         break

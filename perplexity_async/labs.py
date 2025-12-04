@@ -42,10 +42,7 @@ class LabsClient(AsyncMixin):
                 impersonate="chrome",
             )
             self.timestamp = format(random.getrandbits(32), "08x")
-            poll_url = (
-                f"{ENDPOINT_SOCKET_IO}?EIO=4&transport=polling&"
-                f"t={self.timestamp}"
-            )
+            poll_url = f"{ENDPOINT_SOCKET_IO}?EIO=4&transport=polling&" f"t={self.timestamp}"
             response = await self.session.get(poll_url)
             response.raise_for_status()
             self.sid = json.loads(response.text[1:])["sid"]
@@ -56,9 +53,7 @@ class LabsClient(AsyncMixin):
                 f"{ENDPOINT_SOCKET_IO}?EIO=4&transport=polling"
                 f"&t={self.timestamp}&sid={self.sid}"
             )
-            post_response = await self.session.post(
-                auth_url, data='40{"jwt":"anonymous-ask-user"}'
-            )
+            post_response = await self.session.post(auth_url, data='40{"jwt":"anonymous-ask-user"}')
             post_response.raise_for_status()
             assert post_response.text == "OK"
 
@@ -70,12 +65,10 @@ class LabsClient(AsyncMixin):
             )
 
             websocket_url = (
-                "wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket"
-                f"&sid={self.sid}"
+                "wss://www.perplexity.ai/socket.io/?EIO=4&transport=websocket" f"&sid={self.sid}"
             )
             cookies_string = "; ".join(
-                f"{key}={value}"
-                for key, value in self.session.cookies.get_dict().items()
+                f"{key}={value}" for key, value in self.session.cookies.get_dict().items()
             )
             self.ws = WebSocketApp(
                 url=websocket_url,

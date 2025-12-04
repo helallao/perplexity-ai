@@ -49,9 +49,7 @@ class Emailnator(AsyncMixin):
             headers = EMAILNATOR_HEADERS.copy()
             headers["x-xsrf-token"] = unquote(cookies["XSRF-TOKEN"])
 
-        self.s = requests.AsyncSession(
-            headers=headers, cookies=cookies, impersonate="chrome"
-        )
+        self.s = requests.AsyncSession(headers=headers, cookies=cookies, impersonate="chrome")
 
         data = {"email": []}
 
@@ -65,9 +63,7 @@ class Emailnator(AsyncMixin):
             data["email"].append("googleMail")
 
         while True:
-            resp = (
-                await self.s.post(EMAILNATOR_GENERATE_ENDPOINT, json=data)
-            ).json()
+            resp = (await self.s.post(EMAILNATOR_GENERATE_ENDPOINT, json=data)).json()
 
             if "email" in resp:
                 break
@@ -94,10 +90,7 @@ class Emailnator(AsyncMixin):
                     json={"email": self.email},
                 )
             ).json()["messageData"]:
-                if (
-                    msg["messageID"] not in self.inbox_ads
-                    and msg not in self.inbox
-                ):
+                if msg["messageID"] not in self.inbox_ads and msg not in self.inbox:
                     self.new_msgs.append(msg)
 
                     if wait_for(msg):

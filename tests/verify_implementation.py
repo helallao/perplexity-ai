@@ -30,9 +30,7 @@ def print_test(name: str, passed: bool) -> bool:
     """Print the outcome of a single check."""
 
     status = (
-        f"{Colors.GREEN}[PASS]{Colors.RESET}"
-        if passed
-        else f"{Colors.RED}[FAIL]{Colors.RESET}"
+        f"{Colors.GREEN}[PASS]{Colors.RESET}" if passed else f"{Colors.RED}[FAIL]{Colors.RESET}"
     )
     print(f"{status} {name}")
     return passed
@@ -122,9 +120,7 @@ def main() -> int:
 
         results.append(print_test("exceptions.py imports", True))
     except Exception as exc:  # pragma: no cover
-        results.append(
-            print_test(f"exceptions.py imports - Error: {exc}", False)
-        )
+        results.append(print_test(f"exceptions.py imports - Error: {exc}", False))
 
     try:
         from perplexity.utils import (
@@ -146,9 +142,7 @@ def main() -> int:
         assert "pro" in SEARCH_MODES
         results.append(print_test("Configuration values", True))
     except Exception as exc:
-        results.append(
-            print_test(f"Configuration values - Error: {exc}", False)
-        )
+        results.append(print_test(f"Configuration values - Error: {exc}", False))
 
     try:
         logger.info("Verification log message")
@@ -160,9 +154,7 @@ def main() -> int:
         assert issubclass(ValidationError, PerplexityError)
         results.append(print_test("Exception hierarchy", True))
     except Exception as exc:
-        results.append(
-            print_test(f"Exception hierarchy - Error: {exc}", False)
-        )
+        results.append(print_test(f"Exception hierarchy - Error: {exc}", False))
 
     try:
         # Sanitize keeps trimmed value
@@ -215,15 +207,9 @@ def main() -> int:
             with open(example, "r", encoding="utf-8") as handle:
                 code = handle.read()
                 compile(code, example, "exec")
-            results.append(
-                print_test(f"Syntax OK for {Path(example).name}", True)
-            )
+            results.append(print_test(f"Syntax OK for {Path(example).name}", True))
         except Exception as exc:
-            results.append(
-                print_test(
-                    f"Syntax error in {Path(example).name}: {exc}", False
-                )
-            )
+            results.append(print_test(f"Syntax error in {Path(example).name}: {exc}", False))
 
     # 5. DOCUMENTATION
     print_header("5. CHECKING DOCUMENTATION")
@@ -234,8 +220,7 @@ def main() -> int:
             checks = [
                 (
                     "Test badge",
-                    "workflows/Tests/badge.svg" in readme
-                    or "![Tests]" in readme,
+                    "workflows/Tests/badge.svg" in readme or "![Tests]" in readme,
                 ),
                 ("Installation section", "## Installation" in readme),
                 ("Examples section", "examples/" in readme.lower()),
@@ -244,13 +229,9 @@ def main() -> int:
             ]
 
             for check_name, check_result in checks:
-                results.append(
-                    print_test(f"README includes {check_name}", check_result)
-                )
+                results.append(print_test(f"README includes {check_name}", check_result))
     except Exception as exc:
-        results.append(
-            print_test(f"README verification - Error: {exc}", False)
-        )
+        results.append(print_test(f"README verification - Error: {exc}", False))
 
     doc_checks = [
         ("docs/CHANGELOG.md", "Bug #1"),
@@ -264,11 +245,7 @@ def main() -> int:
         try:
             with open(doc_file, "r", encoding="utf-8") as handle:
                 content = handle.read()
-                results.append(
-                    print_test(
-                        f"{doc_file} includes '{keyword}'", keyword in content
-                    )
-                )
+                results.append(print_test(f"{doc_file} includes '{keyword}'", keyword in content))
         except Exception as exc:
             results.append(print_test(f"{doc_file} - Error: {exc}", False))
 
@@ -287,15 +264,10 @@ def main() -> int:
                 content = handle.read()
                 all_present = all(keyword in content for keyword in keywords)
                 keywords_label = ", ".join(keywords)
-                message = (
-                    f"{Path(workflow_file).name} includes "
-                    f"{keywords_label}"
-                )
+                message = f"{Path(workflow_file).name} includes " f"{keywords_label}"
                 results.append(print_test(message, all_present))
         except Exception as exc:
-            results.append(
-                print_test(f"{workflow_file} - Error: {exc}", False)
-            )
+            results.append(print_test(f"{workflow_file} - Error: {exc}", False))
 
     # SUMMARY
     total = len(results)
@@ -304,28 +276,18 @@ def main() -> int:
     print_summary(total, passed)
 
     if passed == total:
-        print(
-            f"{Colors.GREEN}{Colors.BOLD}IMPLEMENTATION VERIFIED{Colors.RESET}"
-        )
+        print(f"{Colors.GREEN}{Colors.BOLD}IMPLEMENTATION VERIFIED{Colors.RESET}")
         print("All checks passed. The project is ready for use.\n")
         return 0
 
     success_ratio = passed / total if total else 0
     if success_ratio >= 0.8:
-        print(
-            f"{Colors.YELLOW}{Colors.BOLD}VERIFICATION PARTIALLY PASSING"
-            f"{Colors.RESET}"
-        )
-        print(
-            f"Passing checks: {passed}/{total}. Review the failures above.\n"
-        )
+        print(f"{Colors.YELLOW}{Colors.BOLD}VERIFICATION PARTIALLY PASSING" f"{Colors.RESET}")
+        print(f"Passing checks: {passed}/{total}. Review the failures above.\n")
         return 1
 
     print(f"{Colors.RED}{Colors.BOLD}VERIFICATION FAILED{Colors.RESET}")
-    print(
-        f"Failing checks: {total - passed}/{total}. "
-        "Address the issues above.\n"
-    )
+    print(f"Failing checks: {total - passed}/{total}. " "Address the issues above.\n")
     return 2
 
 

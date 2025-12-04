@@ -52,8 +52,7 @@ class Client(AsyncMixin):
         self.copilot = 0 if not cookies else float("inf")
         self.file_upload = 0 if not cookies else float("inf")
         self.signin_regex = re.compile(
-            r'"(https://www\.perplexity\.ai/api/auth/callback/email\?'
-            r'callbackUrl=.*?)"'
+            r'"(https://www\.perplexity\.ai/api/auth/callback/email\?' r'callbackUrl=.*?)"'
         )
         self.timestamp = format(random.getrandbits(32), "08x")
         await self.session.get(ENDPOINT_AUTH_SESSION)
@@ -70,9 +69,9 @@ class Client(AsyncMixin):
                     ENDPOINT_AUTH_SIGNIN,
                     data={
                         "email": emailnator_cli.email,
-                        "csrfToken": self.session.cookies.get_dict()[
-                            "next-auth.csrf-token"
-                        ].split("%")[0],
+                        "csrfToken": self.session.cookies.get_dict()["next-auth.csrf-token"].split(
+                            "%"
+                        )[0],
                         "callbackUrl": "https://www.perplexity.ai/",
                         "json": "true",
                     },
@@ -80,8 +79,7 @@ class Client(AsyncMixin):
 
                 if resp.ok:
                     new_msgs = await emailnator_cli.reload(
-                        wait_for=lambda x: x["subject"]
-                        == "Sign in to Perplexity",
+                        wait_for=lambda x: x["subject"] == "Sign in to Perplexity",
                         timeout=20,
                     )
 
@@ -93,9 +91,7 @@ class Client(AsyncMixin):
             except Exception:
                 pass
 
-        msg = emailnator_cli.get(
-            func=lambda x: x["subject"] == "Sign in to Perplexity"
-        )
+        msg = emailnator_cli.get(func=lambda x: x["subject"] == "Sign in to Perplexity")
         new_account_link = self.signin_regex.search(
             await emailnator_cli.open(msg["messageID"])
         ).group(1)
@@ -157,25 +153,17 @@ class Client(AsyncMixin):
             [source in ("web", "scholar", "social") for source in sources]
         ), 'Sources -> ["web", "scholar", "social"]'
         assert (
-            self.copilot > 0
-            if mode in ["pro", "reasoning", "deep research"]
-            else True
+            self.copilot > 0 if mode in ["pro", "reasoning", "deep research"] else True
         ), "You have used all of your enhanced (pro) queries"
-        assert (
-            self.file_upload - len(files) >= 0 if files else True
-        ), (
+        assert self.file_upload - len(files) >= 0 if files else True, (
             f"You tried to upload {len(files)} files but only "
             f"{self.file_upload} upload(s) remain."
         )
 
         self.copilot = (
-            self.copilot - 1
-            if mode in ["pro", "reasoning", "deep research"]
-            else self.copilot
+            self.copilot - 1 if mode in ["pro", "reasoning", "deep research"] else self.copilot
         )
-        self.file_upload = (
-            self.file_upload - len(files) if files else self.file_upload
-        )
+        self.file_upload = self.file_upload - len(files) if files else self.file_upload
 
         uploaded_files = []
 
@@ -205,9 +193,7 @@ class Client(AsyncMixin):
                 data=file,
             )
 
-            upload_resp = await self.session.post(
-                file_upload_info["s3_bucket_url"], multipart=mp
-            )
+            upload_resp = await self.session.post(file_upload_info["s3_bucket_url"], multipart=mp)
 
             if not upload_resp.ok:
                 raise Exception("File upload error", upload_resp)
@@ -227,17 +213,13 @@ class Client(AsyncMixin):
             "query_str": query,
             "params": {
                 "attachments": (
-                    uploaded_files + follow_up["attachments"]
-                    if follow_up
-                    else uploaded_files
+                    uploaded_files + follow_up["attachments"] if follow_up else uploaded_files
                 ),
                 "frontend_context_uuid": str(uuid4()),
                 "frontend_uuid": str(uuid4()),
                 "is_incognito": incognito,
                 "language": language,
-                "last_backend_uuid": (
-                    follow_up["backend_uuid"] if follow_up else None
-                ),
+                "last_backend_uuid": (follow_up["backend_uuid"] if follow_up else None),
                 "mode": "concise" if mode == "auto" else "copilot",
                 "model_preference": {
                     "auto": {None: "turbo"},
@@ -264,9 +246,7 @@ class Client(AsyncMixin):
             },
         }
 
-        resp = await self.session.post(
-            ENDPOINT_SSE_ASK, json=json_data, stream=True
-        )
+        resp = await self.session.post(ENDPOINT_SSE_ASK, json=json_data, stream=True)
         chunks = []
 
         async def stream_response(resp):
@@ -275,9 +255,7 @@ class Client(AsyncMixin):
 
                 if content.startswith("event: message\r\n"):
                     try:
-                        content_json = json.loads(
-                            content[len("event: message\r\ndata: "):]
-                        )
+                        content_json = json.loads(content[len("event: message\r\ndata: ") :])
 
                         # Parse the nested 'text' field if it exists
                         if "text" in content_json and content_json["text"]:
@@ -287,22 +265,14 @@ class Client(AsyncMixin):
                                 if isinstance(text_parsed, list):
                                     for step in text_parsed:
                                         if step.get("step_type") == "FINAL":
-                                            final_content = step.get(
-                                                "content", {}
-                                            )
+                                            final_content = step.get("content", {})
                                             if "answer" in final_content:
-                                                answer_data = json.loads(
-                                                    final_content["answer"]
+                                                answer_data = json.loads(final_content["answer"])
+                                                content_json["answer"] = answer_data.get(
+                                                    "answer", ""
                                                 )
-                                                content_json["answer"] = (
-                                                    answer_data.get(
-                                                        "answer", ""
-                                                    )
-                                                )
-                                                content_json["chunks"] = (
-                                                    answer_data.get(
-                                                        "chunks", []
-                                                    )
+                                                content_json["chunks"] = answer_data.get(
+                                                    "chunks", []
                                                 )
                                                 break
                                 content_json["text"] = text_parsed
@@ -325,9 +295,7 @@ class Client(AsyncMixin):
 
             if content.startswith("event: message\r\n"):
                 try:
-                    content_json = json.loads(
-                        content[len("event: message\r\ndata: "):]
-                    )
+                    content_json = json.loads(content[len("event: message\r\ndata: ") :])
 
                     # Parse the nested 'text' field if it exists
                     if "text" in content_json and content_json["text"]:
@@ -339,15 +307,9 @@ class Client(AsyncMixin):
                                     if step.get("step_type") == "FINAL":
                                         final_content = step.get("content", {})
                                         if "answer" in final_content:
-                                            answer_data = json.loads(
-                                                final_content["answer"]
-                                            )
-                                            content_json["answer"] = (
-                                                answer_data.get("answer", "")
-                                            )
-                                            content_json["chunks"] = (
-                                                answer_data.get("chunks", [])
-                                            )
+                                            answer_data = json.loads(final_content["answer"])
+                                            content_json["answer"] = answer_data.get("answer", "")
+                                            content_json["chunks"] = answer_data.get("chunks", [])
                                             break
                             content_json["text"] = text_parsed
                         except (json.JSONDecodeError, TypeError, KeyError):

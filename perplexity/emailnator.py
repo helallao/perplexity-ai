@@ -87,10 +87,7 @@ class Emailnator:
                 EMAILNATOR_MESSAGE_LIST_ENDPOINT,
                 json={"email": self.email},
             ).json()["messageData"]:
-                if (
-                    msg["messageID"] not in self.inbox_ads
-                    and msg not in self.inbox
-                ):
+                if msg["messageID"] not in self.inbox_ads and msg not in self.inbox:
                     self.new_msgs.append(msg)
 
                     if wait_for and wait_for(msg):

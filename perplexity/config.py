@@ -132,6 +132,4 @@ RATE_LIMIT_ENABLED = True
 
 # Validation Patterns
 EMAIL_SUBJECT_PATTERN = "Sign in to Perplexity"
-SIGNIN_URL_PATTERN = (
-    r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"'
-)
+SIGNIN_URL_PATTERN = r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"'

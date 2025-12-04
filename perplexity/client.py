@@ -38,20 +38,13 @@ class Client:
         )
 
         # Flags and counters for account and query management
-        self.own = bool(
-            cookies
-        )  # Indicates if the client uses its own account
-        self.copilot = (
-            0 if not cookies else float("inf")
-        )  # Remaining pro queries
-        self.file_upload = (
-            0 if not cookies else float("inf")
-        )  # Remaining file uploads
+        self.own = bool(cookies)  # Indicates if the client uses its own account
+        self.copilot = 0 if not cookies else float("inf")  # Remaining pro queries
+        self.file_upload = 0 if not cookies else float("inf")  # Remaining file uploads
 
         # Regular expression for extracting sign-in links
         self.signin_regex = re.compile(
-            r'"(https://www\\.perplexity\\.ai/api/auth/callback/email\\?'
-            r'callbackUrl=.*?)"'
+            r'"(https://www\\.perplexity\\.ai/api/auth/callback/email\\?' r'callbackUrl=.*?)"'
         )
 
         # Unique timestamp for session identification
@@ -74,9 +67,9 @@ class Client:
                     ENDPOINT_AUTH_SIGNIN,
                     data={
                         "email": emailnator_cli.email,
-                        "csrfToken": self.session.cookies.get_dict()[
-                            "next-auth.csrf-token"
-                        ].split("%")[0],
+                        "csrfToken": self.session.cookies.get_dict()["next-auth.csrf-token"].split(
+                            "%"
+                        )[0],
                         "callbackUrl": "https://www.perplexity.ai/",
                         "json": "true",
                     },
@@ -86,8 +79,7 @@ class Client:
                 if resp.ok:
                     # Wait for the sign-in email to arrive
                     new_msgs = emailnator_cli.reload(
-                        wait_for=lambda x: x["subject"]
-                        == "Sign in to Perplexity",
+                        wait_for=lambda x: x["subject"] == "Sign in to Perplexity",
                         timeout=20,
                     )
 
@@ -100,12 +92,8 @@ class Client:
                 pass
 
         # Extract the sign-in link from the email
-        msg = emailnator_cli.get(
-            func=lambda x: x["subject"] == "Sign in to Perplexity"
-        )
-        new_account_link = self.signin_regex.search(
-            emailnator_cli.open(msg["messageID"])
-        ).group(1)
+        msg = emailnator_cli.get(func=lambda x: x["subject"] == "Sign in to Perplexity")
+        new_account_link = self.signin_regex.search(emailnator_cli.open(msg["messageID"])).group(1)
 
         # Complete the account creation process
         self.session.get(new_account_link)
@@ -172,23 +160,15 @@ class Client:
             [source in ("web", "scholar", "social") for source in sources]
         ), "Invalid sources."
         assert (
-            self.copilot > 0
-            if mode in ["pro", "reasoning", "deep research"]
-            else True
+            self.copilot > 0 if mode in ["pro", "reasoning", "deep research"] else True
         ), "No remaining pro queries."
-        assert (
-            self.file_upload - len(files) >= 0 if files else True
-        ), "File upload limit exceeded."
+        assert self.file_upload - len(files) >= 0 if files else True, "File upload limit exceeded."
 
         # Update query and file upload counters
         self.copilot = (
-            self.copilot - 1
-            if mode in ["pro", "reasoning", "deep research"]
-            else self.copilot
+            self.copilot - 1 if mode in ["pro", "reasoning", "deep research"] else self.copilot
         )
-        self.file_upload = (
-            self.file_upload - len(files) if files else self.file_upload
-        )
+        self.file_upload = self.file_upload - len(files) if files else self.file_upload
 
         # Upload files and prepare the query payload
         uploaded_files = []
@@ -219,9 +199,7 @@ class Client:
                 data=file,
             )
 
-            upload_resp = self.session.post(
-                file_upload_info["s3_bucket_url"], multipart=mp
-            )
+            upload_resp = self.session.post(file_upload_info["s3_bucket_url"], multipart=mp)
 
             if not upload_resp.ok:
                 raise Exception("File upload error", upload_resp)
@@ -243,17 +221,13 @@ class Client:
             "query_str": query,
             "params": {
                 "attachments": (
-                    uploaded_files + follow_up["attachments"]
-                    if follow_up
-                    else uploaded_files
+                    uploaded_files + follow_up["attachments"] if follow_up else uploaded_files
                 ),
                 "frontend_context_uuid": str(uuid4()),
                 "frontend_uuid": str(uuid4()),
                 "is_incognito": incognito,
                 "language": language,
-                "last_backend_uuid": (
-                    follow_up["backend_uuid"] if follow_up else None
-                ),
+                "last_backend_uuid": (follow_up["backend_uuid"] if follow_up else None),
                 "mode": "concise" if mode == "auto" else "copilot",
                 "model_preference": {
                     "auto": {None: "turbo"},
@@ -281,9 +255,7 @@ class Client:
         }
 
         # Send the query request and handle the response
-        resp = self.session.post(
-            ENDPOINT_SSE_ASK, json=json_data, stream=True
-        )
+        resp = self.session.post(ENDPOINT_SSE_ASK, json=json_data, stream=True)
         chunks = []
 
         def stream_response(resp):
@@ -295,9 +267,7 @@ class Client:
 
                 if content.startswith("event: message\r\n"):
                     try:
-                        content_json = json.loads(
-                            content[len("event: message\r\ndata: "):]
-                        )
+                        content_json = json.loads(content[len("event: message\r\ndata: ") :])
 
                         # Parse the nested 'text' field if it exists
                         if "text" in content_json and content_json["text"]:
@@ -307,22 +277,14 @@ class Client:
                                 if isinstance(text_parsed, list):
                                     for step in text_parsed:
                                         if step.get("step_type") == "FINAL":
-                                            final_content = step.get(
-                                                "content", {}
-                                            )
+                                            final_content = step.get("content", {})
                                             if "answer" in final_content:
-                                                answer_data = json.loads(
-                                                    final_content["answer"]
+                                                answer_data = json.loads(final_content["answer"])
+                                                content_json["answer"] = answer_data.get(
+                                                    "answer", ""
                                                 )
-                                                content_json["answer"] = (
-                                                    answer_data.get(
-                                                        "answer", ""
-                                                    )
-                                                )
-                                                content_json["chunks"] = (
-                                                    answer_data.get(
-                                                        "chunks", []
-                                                    )
+                                                content_json["chunks"] = answer_data.get(
+                                                    "chunks", []
                                                 )
                                                 break
                                 content_json["text"] = text_parsed
@@ -345,9 +307,7 @@ class Client:
 
             if content.startswith("event: message\r\n"):
                 try:
-                    content_json = json.loads(
-                        content[len("event: message\r\ndata: "):]
-                    )
+                    content_json = json.loads(content[len("event: message\r\ndata: ") :])
 
                     # Parse the nested 'text' field if it exists
                     if "text" in content_json and content_json["text"]:
@@ -359,15 +319,9 @@ class Client:
                                     if step.get("step_type") == "FINAL":
                                         final_content = step.get("content", {})
                                         if "answer" in final_content:
-                                            answer_data = json.loads(
-                                                final_content["answer"]
-                                            )
-                                            content_json["answer"] = (
-                                                answer_data.get("answer", "")
-                                            )
-                                            content_json["chunks"] = (
-                                                answer_data.get("chunks", [])
-                                            )
+                                            answer_data = json.loads(final_content["answer"])
+                                            content_json["answer"] = answer_data.get("answer", "")
+                                            content_json["chunks"] = answer_data.get("chunks", [])
                                             break
                             content_json["text"] = text_parsed
                         except (json.JSONDecodeError, TypeError, KeyError):

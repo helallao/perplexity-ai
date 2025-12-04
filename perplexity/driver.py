@@ -22,8 +22,7 @@ class Driver:
     def __init__(self):
         # Regular expression for extracting sign-in links
         self.signin_regex = re.compile(
-            r'"(https://www\\.perplexity\\.ai/api/auth/callback/email\\?'
-            r'callbackUrl=.*?)"'
+            r'"(https://www\\.perplexity\\.ai/api/auth/callback/email\\?' r'callbackUrl=.*?)"'
         )
 
         # Flags and state variables
@@ -51,9 +50,7 @@ class Driver:
                             self.emailnator_cookies,
                             {
                                 **self.emailnator_headers,
-                                "x-xsrf-token": unquote(
-                                    self.emailnator_cookies["XSRF-TOKEN"]
-                                ),
+                                "x-xsrf-token": unquote(self.emailnator_cookies["XSRF-TOKEN"]),
                             },
                         )
 
@@ -62,9 +59,9 @@ class Driver:
                             "https://www.perplexity.ai/api/auth/signin/email",
                             data={
                                 "email": emailnator_cli.email,
-                                "csrfToken": self.perplexity_cookies[
-                                    "next-auth.csrf-token"
-                                ].split("%")[0],
+                                "csrfToken": self.perplexity_cookies["next-auth.csrf-token"].split(
+                                    "%"
+                                )[0],
                                 "callbackUrl": "https://www.perplexity.ai/",
                                 "json": "true",
                             },
@@ -75,21 +72,17 @@ class Driver:
                         # Check if the response is successful
                         if resp.ok:
                             new_msgs = emailnator_cli.reload(
-                                wait_for=lambda x: x["subject"]
-                                == "Sign in to Perplexity",
+                                wait_for=lambda x: x["subject"] == "Sign in to Perplexity",
                                 timeout=20,
                             )
 
                             if new_msgs:
                                 msg = emailnator_cli.get(
-                                    func=lambda x: x["subject"]
-                                    == "Sign in to Perplexity"
+                                    func=lambda x: x["subject"] == "Sign in to Perplexity"
                                 )
-                                self.new_account_link = (
-                                    self.signin_regex.search(
-                                        emailnator_cli.open(msg["messageID"])
-                                    ).group(1)
-                                )
+                                self.new_account_link = self.signin_regex.search(
+                                    emailnator_cli.open(msg["messageID"])
+                                ).group(1)
 
                                 print("New account created\n")
                                 break
@@ -112,10 +105,7 @@ class Driver:
         """
         Intercepts browser requests to manage cookies and account creation.
         """
-        if (
-            self.renewing_emailnator_cookies
-            and request.url != "https://www.emailnator.com/"
-        ):
+        if self.renewing_emailnator_cookies and request.url != "https://www.emailnator.com/":
             self.page.goto("https://www.emailnator.com/")
             return
 
@@ -124,8 +114,7 @@ class Driver:
 
             # Extract cookies from the request
             cookies = {
-                x.split("=")[0]: x.split("=")[1]
-                for x in request.headers["cookie"].split("; ")
+                x.split("=")[0]: x.split("=")[1] for x in request.headers["cookie"].split("; ")
             }
 
             if (
@@ -158,14 +147,12 @@ class Driver:
 
             # Extract cookies from the request
             cookies = {
-                x.split("=")[0]: x.split("=")[1]
-                for x in request.headers["cookie"].split("; ")
+                x.split("=")[0]: x.split("=")[1] for x in request.headers["cookie"].split("; ")
             }
 
             if (
                 not self.emailnator_cookies
-                and "Temporary Disposable Gmail | Temp Mail | Email Generator"
-                in response.text()
+                and "Temporary Disposable Gmail | Temp Mail | Email Generator" in response.text()
                 and "XSRF-TOKEN" in cookies
             ):
                 self.emailnator_headers = request.headers
@@ -229,9 +216,7 @@ class Driver:
         with sync_playwright() if port else sync_patchright() as playwright:
             if port:
                 # Connect to an existing Chrome instance
-                self.browser = playwright.chromium.connect_over_cdp(
-                    f"http://localhost:{port}"
-                )
+                self.browser = playwright.chromium.connect_over_cdp(f"http://localhost:{port}")
             else:
                 # Launch a new Chrome instance
                 self.browser = playwright.chromium.launch_persistent_context(
@@ -241,11 +226,7 @@ class Driver:
                     no_viewport=True,
                 )
 
-            self.page = (
-                self.browser.contexts[0].new_page()
-                if port
-                else self.browser.new_page()
-            )
+            self.page = self.browser.contexts[0].new_page() if port else self.browser.new_page()
             self.background_pages.append(self.page)
             self.page.route("**/*", self.intercept_request)
             self.page.goto("https://www.perplexity.ai/")
