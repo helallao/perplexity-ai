@@ -72,6 +72,8 @@ def main() -> int:
 
         # Tests
         ("tests/__init__.py", "Test package initializer"),
+        ("tests/test_utils.py", "Utility tests"),
+        ("tests/test_config.py", "Config tests"),
 
         # Examples
         ("examples/basic_usage.py", "Basic example"),
