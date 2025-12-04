@@ -1,0 +1,44 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+
+    - name: Run black
+      run: black --check --diff perplexity perplexity_async
+
+    - name: Run isort
+      run: isort --check-only --diff perplexity perplexity_async
+
+    - name: Run flake8
+      run: flake8 perplexity perplexity_async
+
+    - name: Run mypy
+      run: mypy perplexity perplexity_async
+
+    - name: Run pylint
+      run: pylint perplexity perplexity_async || true
+
+    - name: Security check with bandit
+      run: bandit -r perplexity perplexity_async -ll

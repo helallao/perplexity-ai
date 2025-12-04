@@ -1,3 +1,45 @@
+Metadata-Version: 2.4
+Name: perplexity-api
+Version: 0.2.0
+Summary: Unofficial Python API for Perplexity.ai with account management
+Author-email: ESousa97 <contact@perplexity.ai>
+License: MIT
+Project-URL: Homepage, https://github.com/ESousa97/perplexity-ai
+Project-URL: Repository, https://github.com/ESousa97/perplexity-ai
+Project-URL: Issues, https://github.com/ESousa97/perplexity-ai/issues
+Keywords: perplexity,ai,api,automation,search
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: curl_cffi>=0.5.7
+Requires-Dist: websocket-client>=1.9.0; python_version >= "3.9"
+Requires-Dist: websocket-client<1.9.0,>=1.5.0; python_version < "3.9"
+Provides-Extra: driver
+Requires-Dist: patchright>=1.0.0; extra == "driver"
+Requires-Dist: playwright>=1.40.0; extra == "driver"
+Provides-Extra: async
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: mypy>=1.5.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Provides-Extra: all
+Requires-Dist: perplexity-api[dev,driver]; extra == "all"
+Dynamic: license-file
+
 # Perplexity AI
 
 ![Tests](https://github.com/yourusername/perplexity-ai/workflows/Tests/badge.svg)
