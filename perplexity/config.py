@@ -5,7 +5,7 @@ This module contains all configurable constants used throughout the library.
 Modify these values to customize behavior without changing core code.
 """
 
-from typing import Dict, List
+from typing import Dict
 
 # API Configuration
 API_BASE_URL = "https://www.perplexity.ai"
@@ -36,9 +36,7 @@ SEARCH_LANGUAGES = ["en-US", "en-GB", "pt-BR", "es-ES", "fr-FR", "de-DE"]
 
 # Model Mappings
 MODEL_MAPPINGS: Dict[str, Dict[str, str]] = {
-    "auto": {
-        None: "turbo"
-    },
+    "auto": {None: "turbo"},
     "pro": {
         None: "pplx_pro",
         "sonar": "experimental",
@@ -46,7 +44,7 @@ MODEL_MAPPINGS: Dict[str, Dict[str, str]] = {
         "gpt-4o": "gpt4o",
         "claude 3.7 sonnet": "claude2",
         "gemini 2.0 flash": "gemini2flash",
-        "grok-2": "grok"
+        "grok-2": "grok",
     },
     "reasoning": {
         None: "pplx_reasoning",
@@ -56,17 +54,21 @@ MODEL_MAPPINGS: Dict[str, Dict[str, str]] = {
         "gpt5": "gpt5",
         "gpt5_thinking": "gpt5thinking",
     },
-    "deep research": {
-        None: "pplx_alpha"
-    }
+    "deep research": {None: "pplx_alpha"},
 }
 
 # Labs Models
-LABS_MODELS = ["r1-1776", "sonar-pro", "sonar", "sonar-reasoning-pro", "sonar-reasoning"]
+LABS_MODELS = [
+    "r1-1776",
+    "sonar-pro",
+    "sonar",
+    "sonar-reasoning-pro",
+    "sonar-reasoning",
+]
 
 # HTTP Headers Template
 DEFAULT_HEADERS = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",  # noqa: E501
     "accept-language": "en-US,en;q=0.9",
     "cache-control": "max-age=0",
     "dnt": "1",
@@ -75,7 +77,7 @@ DEFAULT_HEADERS = {
     "sec-ch-ua-arch": '"x86"',
     "sec-ch-ua-bitness": '"64"',
     "sec-ch-ua-full-version": '"128.0.6613.120"',
-    "sec-ch-ua-full-version-list": '"Not;A=Brand";v="24.0.0.0", "Chromium";v="128.0.6613.120"',
+    "sec-ch-ua-full-version-list": '"Not;A=Brand";v="24.0.0.0", "Chromium";v="128.0.6613.120"',  # noqa: E501
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-model": '""',
     "sec-ch-ua-platform": '"Windows"',
@@ -85,7 +87,7 @@ DEFAULT_HEADERS = {
     "sec-fetch-site": "same-origin",
     "sec-fetch-user": "?1",
     "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",  # noqa: E501
 }
 
 # Emailnator Headers Template
@@ -101,7 +103,7 @@ EMAILNATOR_HEADERS = {
     "sec-ch-ua-arch": '"x86"',
     "sec-ch-ua-bitness": '"64"',
     "sec-ch-ua-full-version": '"128.0.6613.120"',
-    "sec-ch-ua-full-version-list": '"Not;A=Brand";v="24.0.0.0", "Chromium";v="128.0.6613.120"',
+    "sec-ch-ua-full-version-list": '"Not;A=Brand";v="24.0.0.0", "Chromium";v="128.0.6613.120"',  # noqa: E501
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-model": '""',
     "sec-ch-ua-platform": '"Windows"',
@@ -109,7 +111,7 @@ EMAILNATOR_HEADERS = {
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-origin",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",  # noqa: E501
     "x-requested-with": "XMLHttpRequest",
 }
 
@@ -130,4 +132,6 @@ RATE_LIMIT_ENABLED = True
 
 # Validation Patterns
 EMAIL_SUBJECT_PATTERN = "Sign in to Perplexity"
-SIGNIN_URL_PATTERN = r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"'
+SIGNIN_URL_PATTERN = (
+    r'"(https://www\.perplexity\.ai/api/auth/callback/email\?callbackUrl=.*?)"'
+)

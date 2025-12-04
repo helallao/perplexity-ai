@@ -17,7 +17,7 @@ def setup_logger(
     name: str = "perplexity",
     level: Optional[str] = None,
     log_file: Optional[str] = None,
-    console: bool = True
+    console: bool = True,
 ) -> logging.Logger:
     """
     Configure and return a logger instance.
@@ -37,19 +37,19 @@ def setup_logger(
     """
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, level or LOG_LEVEL))
-    
+
     # Remove existing handlers
     logger.handlers.clear()
-    
+
     # Create formatter
     formatter = logging.Formatter(LOG_FORMAT)
-    
+
     # Console handler
     if console:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
-    
+
     # File handler
     if log_file or LOG_FILE:
         file_path = Path(log_file or LOG_FILE)
@@ -57,7 +57,7 @@ def setup_logger(
         file_handler = logging.FileHandler(file_path, encoding="utf-8")
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-    
+
     return logger
 
 

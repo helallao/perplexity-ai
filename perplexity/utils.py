@@ -29,7 +29,7 @@ def retry_with_backoff(
     max_attempts: int = RETRY_MAX_ATTEMPTS,
     backoff_factor: float = RETRY_BACKOFF_FACTOR,
     exceptions: Tuple[Type[Exception], ...] = (Exception,),
-    on_retry: Optional[Callable[[int, Exception], None]] = None
+    on_retry: Optional[Callable[[int, Exception], None]] = None,
 ) -> Callable:
     """
     Decorator that retries a function with exponential backoff.
@@ -48,6 +48,7 @@ def retry_with_backoff(
         ... def fetch_data():
         ...     return api.get("/data")
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -58,29 +59,32 @@ def retry_with_backoff(
                 except exceptions as e:
                     attempt += 1
                     if attempt >= max_attempts:
-                        logger.error(f"Failed after {max_attempts} attempts: {e}")
+                        logger.error(
+                            f"Failed after {max_attempts} attempts: {e}"
+                        )
                         raise
-                    
-                    wait_time = backoff_factor ** attempt + random.uniform(0, 1)
+
+                    wait_time = backoff_factor**attempt + random.uniform(0, 1)
                     logger.warning(
                         f"Attempt {attempt}/{max_attempts} failed: {e}. "
                         f"Retrying in {wait_time:.2f}s..."
                     )
-                    
+
                     if on_retry:
                         on_retry(attempt, e)
-                    
+
                     time.sleep(wait_time)
-            
+
             raise Exception(f"Failed after {max_attempts} attempts")
-        
+
         return wrapper
+
     return decorator
 
 
 def rate_limit(
     min_delay: float = RATE_LIMIT_MIN_DELAY,
-    max_delay: float = RATE_LIMIT_MAX_DELAY
+    max_delay: float = RATE_LIMIT_MAX_DELAY,
 ) -> Callable:
     """
     Decorator that rate limits function calls with random delay.
@@ -97,31 +101,30 @@ def rate_limit(
         ... def make_request():
         ...     return api.get("/endpoint")
     """
+
     def decorator(func: Callable) -> Callable:
         last_call = [0.0]  # Mutable container to store across calls
-        
+
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             delay = random.uniform(min_delay, max_delay)
             elapsed = time.time() - last_call[0]
-            
+
             if elapsed < delay:
                 sleep_time = delay - elapsed
                 logger.debug(f"Rate limiting: waiting {sleep_time:.2f}s")
                 time.sleep(sleep_time)
-            
+
             last_call[0] = time.time()
             return func(*args, **kwargs)
-        
+
         return wrapper
+
     return decorator
 
 
 def validate_search_params(
-    mode: str,
-    model: Optional[str],
-    sources: list,
-    own_account: bool = False
+    mode: str, model: Optional[str], sources: list, own_account: bool = False
 ) -> None:
     """
     Validate search parameters.
@@ -143,7 +146,7 @@ def validate_search_params(
         raise ValidationError(
             f"Invalid mode '{mode}'. Must be one of: {', '.join(SEARCH_MODES)}"
         )
-    
+
     # Validate model
     if model is not None:
         valid_models = list(MODEL_MAPPINGS.get(mode, {}).keys())
@@ -152,14 +155,14 @@ def validate_search_params(
                 f"Invalid model '{model}' for mode '{mode}'. "
                 f"Valid models: {', '.join(str(m) for m in valid_models)}"
             )
-    
+
     # Check if model requires own account
     if model is not None and not own_account:
         raise ValidationError(
-            f"Model selection requires an account with cookies. "
-            f"Initialize Client with cookies parameter."
+            "Model selection requires an account with cookies. "
+            "Initialize Client with cookies parameter."
         )
-    
+
     # Validate sources
     invalid_sources = [s for s in sources if s not in SEARCH_SOURCES]
     if invalid_sources:
@@ -167,7 +170,7 @@ def validate_search_params(
             f"Invalid sources: {', '.join(invalid_sources)}. "
             f"Valid sources: {', '.join(SEARCH_SOURCES)}"
         )
-    
+
     if not sources:
         raise ValidationError("At least one source must be specified")
 
@@ -176,7 +179,7 @@ def validate_query_limits(
     copilot_remaining: int,
     file_upload_remaining: int,
     mode: str,
-    files_count: int
+    files_count: int,
 ) -> None:
     """
     Validate query and file upload limits.
@@ -194,12 +197,15 @@ def validate_query_limits(
         >>> validate_query_limits(5, 10, "pro", 2)
     """
     # Check copilot queries
-    if mode in ["pro", "reasoning", "deep research"] and copilot_remaining <= 0:
+    if (
+        mode in ["pro", "reasoning", "deep research"]
+        and copilot_remaining <= 0
+    ):
         raise ValidationError(
             f"No remaining enhanced queries for mode '{mode}'. "
             f"Create a new account or use mode='auto'."
         )
-    
+
     # Check file uploads
     if files_count > 0 and file_upload_remaining < files_count:
         raise ValidationError(
@@ -223,14 +229,16 @@ def validate_file_data(files: dict) -> None:
     """
     if not isinstance(files, dict):
         raise ValidationError("Files must be a dictionary")
-    
+
     for filename, data in files.items():
         if not isinstance(filename, str):
-            raise ValidationError(f"Filename must be string, got {type(filename)}")
-        
+            raise ValidationError(
+                f"Filename must be string, got {type(filename)}"
+            )
+
         if not filename.strip():
             raise ValidationError("Filename cannot be empty")
-        
+
         if not isinstance(data, (bytes, str)):
             raise ValidationError(
                 f"File data must be bytes or string, got {type(data)}"
@@ -256,15 +264,15 @@ def sanitize_query(query: str) -> str:
     """
     if not isinstance(query, str):
         raise ValidationError(f"Query must be string, got {type(query)}")
-    
+
     query = query.strip()
-    
+
     if not query:
         raise ValidationError("Query cannot be empty")
-    
+
     if len(query) > 10000:
         raise ValidationError("Query is too long (max 10000 characters)")
-    
+
     return query
 
 
@@ -286,27 +294,33 @@ def parse_nested_json_response(content_json: dict) -> dict:
         >>> print(response['answer'])
     """
     import json
-    
-    if 'text' in content_json and content_json['text']:
+
+    if "text" in content_json and content_json["text"]:
         try:
-            text_parsed = json.loads(content_json['text'])
-            
+            text_parsed = json.loads(content_json["text"])
+
             if isinstance(text_parsed, list):
                 for step in text_parsed:
-                    if step.get('step_type') == 'FINAL':
-                        final_content = step.get('content', {})
-                        
-                        if 'answer' in final_content:
+                    if step.get("step_type") == "FINAL":
+                        final_content = step.get("content", {})
+
+                        if "answer" in final_content:
                             try:
-                                answer_data = json.loads(final_content['answer'])
-                                content_json['answer'] = answer_data.get('answer', '')
-                                content_json['chunks'] = answer_data.get('chunks', [])
+                                answer_data = json.loads(
+                                    final_content["answer"]
+                                )
+                                content_json["answer"] = answer_data.get(
+                                    "answer", ""
+                                )
+                                content_json["chunks"] = answer_data.get(
+                                    "chunks", []
+                                )
                             except (json.JSONDecodeError, TypeError):
                                 pass
                         break
-            
-            content_json['text'] = text_parsed
+
+            content_json["text"] = text_parsed
         except (json.JSONDecodeError, TypeError, KeyError):
             pass
-    
+
     return content_json
