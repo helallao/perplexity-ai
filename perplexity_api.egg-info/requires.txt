@@ -1,4 +1,4 @@
-curl_cffi>=0.13.0
+curl_cffi>=0.5.7
 websocket-client>=1.9.0
 
 [all]
