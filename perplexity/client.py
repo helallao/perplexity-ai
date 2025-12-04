@@ -217,30 +217,70 @@ class Client:
             '''
             Generator for streaming responses.
             '''
-            for chunk in resp.iter_lines(delimiter=b'\\r\\n\\r\\n'):
+            for chunk in resp.iter_lines(delimiter=b'\r\n\r\n'):
                 content = chunk.decode('utf-8')
 
-                if content.startswith('event: message\\r\\n'):
-                    content_json = json.loads(content[len('event: message\\r\\ndata: '):])
-                    if 'text' in content_json:
-                        content_json['text'] = json.loads(content_json['text'])
-                    chunks.append(content_json)
-                    yield chunks[-1]
+                if content.startswith('event: message\r\n'):
+                    try:
+                        content_json = json.loads(content[len('event: message\r\ndata: '):])
+                        
+                        # Parse the nested 'text' field if it exists
+                        if 'text' in content_json and content_json['text']:
+                            try:
+                                text_parsed = json.loads(content_json['text'])
+                                # Extract answer from FINAL step if available
+                                if isinstance(text_parsed, list):
+                                    for step in text_parsed:
+                                        if step.get('step_type') == 'FINAL':
+                                            final_content = step.get('content', {})
+                                            if 'answer' in final_content:
+                                                answer_data = json.loads(final_content['answer'])
+                                                content_json['answer'] = answer_data.get('answer', '')
+                                                content_json['chunks'] = answer_data.get('chunks', [])
+                                                break
+                                content_json['text'] = text_parsed
+                            except (json.JSONDecodeError, TypeError, KeyError):
+                                pass
+                        
+                        chunks.append(content_json)
+                        yield chunks[-1]
+                    except (json.JSONDecodeError, KeyError):
+                        continue
 
-                elif content.startswith('event: end_of_stream\\r\\n'):
+                elif content.startswith('event: end_of_stream\r\n'):
                     return
 
         if stream:
             return stream_response(resp)
 
-        for chunk in resp.iter_lines(delimiter=b'\\r\\n\\r\\n'):
+        for chunk in resp.iter_lines(delimiter=b'\r\n\r\n'):
             content = chunk.decode('utf-8')
 
-            if content.startswith('event: message\\r\\n'):
-                content_json = json.loads(content[len('event: message\\r\\ndata: '):])
-                if 'text' in content_json:
-                    content_json['text'] = json.loads(content_json['text'])
-                chunks.append(content_json)
+            if content.startswith('event: message\r\n'):
+                try:
+                    content_json = json.loads(content[len('event: message\r\ndata: '):])
+                    
+                    # Parse the nested 'text' field if it exists
+                    if 'text' in content_json and content_json['text']:
+                        try:
+                            text_parsed = json.loads(content_json['text'])
+                            # Extract answer from FINAL step if available
+                            if isinstance(text_parsed, list):
+                                for step in text_parsed:
+                                    if step.get('step_type') == 'FINAL':
+                                        final_content = step.get('content', {})
+                                        if 'answer' in final_content:
+                                            answer_data = json.loads(final_content['answer'])
+                                            content_json['answer'] = answer_data.get('answer', '')
+                                            content_json['chunks'] = answer_data.get('chunks', [])
+                                            break
+                            content_json['text'] = text_parsed
+                        except (json.JSONDecodeError, TypeError, KeyError):
+                            pass
+                    
+                    chunks.append(content_json)
+                except (json.JSONDecodeError, KeyError):
+                    continue
 
-            elif content.startswith('event: end_of_stream\\r\\n'):
-                return chunks[-1]
+            elif content.startswith('event: end_of_stream\r\n'):
+                return chunks[-1] if chunks else {}

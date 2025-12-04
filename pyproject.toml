@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "perplexity-api"
+version = "0.2.0"
+description = "Unofficial Python API for Perplexity.ai with account management"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "ESousa97", email = "contact@perplexity.ai"},
+]
+keywords = ["perplexity", "ai", "api", "automation", "search"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "curl_cffi>=0.13.0",
+    "websocket-client>=1.9.0",
+]
+
+[project.optional-dependencies]
+driver = [
+    "patchright>=1.0.0",
+    "playwright>=1.40.0",
+]
+async = []
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "mypy>=1.5.0",
+    "flake8>=6.0.0",
+    "isort>=5.12.0",
+]
+all = [
+    "perplexity-api[driver,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/ESousa97/perplexity-ai"
+Repository = "https://github.com/ESousa97/perplexity-ai"
+Issues = "https://github.com/ESousa97/perplexity-ai/issues"
+
+[tool.setuptools.packages.find]
+include = ["perplexity*", "perplexity_async*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+asyncio_mode = "auto"
+
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true

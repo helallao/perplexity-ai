@@ -2,6 +2,7 @@
 # time: Time-related functions for delays and timeouts
 # urllib.parse: URL parsing utilities
 # curl_cffi: HTTP requests
+import time
 from urllib.parse import unquote
 from curl_cffi import requests
 
