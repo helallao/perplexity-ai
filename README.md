@@ -75,7 +75,7 @@ client = perplexity.Client(cookies)
 response = client.search(
     "Complex query here",
     mode='pro',
-    model='gpt-4.5',
+    model='gpt-5.2',
     sources=['scholar']
 )
 ```
@@ -174,7 +174,7 @@ perplexity_cookies = {
 
 perplexity_cli = perplexity.Client(perplexity_cookies)
 
-resp = perplexity_cli.search('Your query here', mode='reasoning', model='o3', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+resp = perplexity_cli.search('Your query here', mode='reasoning', model='gpt-5.2-thinking', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
 print(resp)
 ```
 
@@ -208,8 +208,8 @@ async def test():
     # mode = ['auto', 'pro', 'reasoning', 'deep research']
     # model = model for mode, which can only be used in own accounts, that is {
     #     'auto': [None],
-    #     'pro': [None, 'sonar', 'gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
-    #     'reasoning': [None, 'gpt-5.1-thingking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking'],
+    #     'pro': [None, 'sonar', 'gpt-5.2', 'claude-4.5-sonnet', 'grok-4-1'],
+    #     'reasoning': [None, 'gpt-5.2-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking', 'grok-4.1-reasoning'],
     #     'deep research': [None]
     # }
     # sources = ['web', 'scholar', 'social']
@@ -241,7 +241,7 @@ perplexity_cookies = {
 async def test():
     perplexity_cli = await perplexity_async.Client(perplexity_cookies)
 
-    resp = await perplexity_cli.search('Your query here', mode='reasoning', model='o3', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
+    resp = await perplexity_cli.search('Your query here', mode='reasoning', model='gpt-5.2-thinking', sources=['web'], files={'myfile.txt': open('file.txt').read()}, stream=False, language='en-US', follow_up=None, incognito=False)
     print(resp)
 
 asyncio.run(test())
@@ -346,8 +346,8 @@ class Client:
 ```python
 {
     'auto': [None],
-    'pro': [None, 'sonar', 'gpt-5.1', 'claude-4.5-sonnet', 'gemini-2.5-pro', 'grok-4'],
-    'reasoning': [None, 'gpt-5.1-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking'],
+    'pro': [None, 'sonar', 'gpt-5.2', 'claude-4.5-sonnet', 'grok-4-1'],
+    'reasoning': [None, 'gpt-5.2-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking', 'grok-4.1-reasoning'],
     'deep research': [None]
 }
 ```
