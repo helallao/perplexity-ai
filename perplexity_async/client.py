@@ -128,21 +128,14 @@ class Client(AsyncMixin):
             model
             in {
                 "auto": [None],
-                "pro": [
+                 "pro": [
                     None,
                     "sonar",
-                    "gpt-5.1",
+                    "gpt-5.2",
                     "claude-4.5-sonnet",
-                    "gemini-2.5-pro",
-                    "grok-4",
+                    "grok-4.1",
                 ],
-                "reasoning": [
-                    None,
-                    "gpt-5.1-thingking",
-                    "claude-4.5-sonnet-thinking",
-                    "gemini-3.0-pro",
-                    "kimi-k2-thinking",
-                ],
+                "reasoning": [None, "gpt-5.2-thinking", "claude-4.5-sonnet-thinking", "gemini-3.0-pro", "kimi-k2-thinking", "grok-4.1-reasoning"],
                 "deep research": [None],
                 "copilot": [None, "gemini-3.0-pro", "kimi-k2-thinking"],
             }[mode]
@@ -223,20 +216,20 @@ class Client(AsyncMixin):
                 "mode": "concise" if mode == "auto" else "copilot",
                 "model_preference": {
                     "auto": {None: "turbo"},
-                    "pro": {
+                     "pro": {
                         None: "pplx_pro",
                         "sonar": "experimental",
-                        "gpt-5.1": "gpt51",
+                        "gpt-5.2": "gpt52",
                         "claude-4.5-sonnet": "claude45sonnet",
-                        "gemini-2.5-pro": "gemini25pro",
-                        "grok-4": "grok4",
+                        "grok-4.1": "grok41nonreasoning",
                     },
                     "reasoning": {
                         None: "pplx_reasoning",
-                        "gpt-5.1-thingking": "gpt51_thinking",
+                        "gpt-5.2-thinking": "gpt52_thinking",
                         "claude-4.5-sonnet-thinking": "claude45sonnetthinking",
                         "gemini-3.0-pro": "gemini30pro",
                         "kimi-k2-thinking": "kimik2thinking",
+                        "grok-4.1-reasoning": "grok41reasoning",
                     },
                     "deep research": {None: "pplx_alpha"},
                 }[mode][model],

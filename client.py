@@ -121,28 +121,18 @@ class Client:
                 "pro": [
                     None,
                     "sonar",
-                    "gpt-4.5",
-                    "gpt-4o",
-                    "claude 3.7 sonnet",
-                    "gemini 2.0 flash",
-                    "grok-2",
+                    "gpt-5.2",
+                    "claude-4.5-sonnet",
+                    "grok-4.1",
                 ],
-                "reasoning": [
-                    None,
-                    "r1",
-                    "o3-mini",
-                    "claude 3.7 sonnet",
-                    "gpt5",
-                    "gpt5_thinking",
-                    "claude37sonnetthinking",
-                ],
+                "reasoning": [None, "gpt-5.2-thinking", "claude-4.5-sonnet-thinking", "gemini-3.0-pro", "kimi-k2-thinking", "grok-4.1-reasoning"],
                 "deep research": [None],
             }[mode]
             if self.own
             else True
         ), """Models for modes -> {'auto': [None],
-             'pro': [None, 'sonar', 'gpt-4.5', 'gpt-4o', 'claude 3.7 sonnet', 'gemini 2.0 flash', 'grok-2'],
-            'reasoning': [None, 'r1', 'o3-mini', 'claude 3.7 sonnet', 'gpt5', 'gpt5_thinking', 'claude37sonnetthinking'],
+             'pro': [None, 'sonar', 'gpt-5.2', 'claude-4.5-sonnet', 'grok-4.1'],
+            'reasoning': [None, 'gpt-5.2-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro", 'kimi-k2-thinking', 'grok-4.1-reasoning'],
             'deep research': [None]
              }"""
         assert all(
@@ -215,19 +205,17 @@ class Client:
                     "pro": {
                         None: "pplx_pro",
                         "sonar": "experimental",
-                        "gpt-4.5": "gpt45",
-                        "gpt-4o": "gpt4o",
-                        "claude 3.7 sonnet": "claude2",
-                        "gemini 2.0 flash": "gemini2flash",
-                        "grok-2": "grok",
+                        "gpt-5.2": "gpt52",
+                        "claude-4.5-sonnet": "claude45sonnet",
+                        "grok-4.1": "grok41nonreasoning",
                     },
                     "reasoning": {
                         None: "pplx_reasoning",
-                        "r1": "r1",
-                        "o3-mini": "o3mini",
-                        "claude 3.7 sonnet": "claude37sonnetthinking",
-                        "gpt5": "gpt5",
-                        "gpt5_thinking": "gpt5thinking",
+                        "gpt-5.2-thinking": "gpt52_thinking",
+                        "claude-4.5-sonnet-thinking": "claude45sonnetthinking",
+                        "gemini-3.0-pro": "gemini30pro",
+                        "kimi-k2-thinking": "kimik2thinking",
+                        "grok-4.1-reasoning": "grok41reasoning",
                     },
                     "deep research": {None: "pplx_alpha"},
                 }[mode][model],
