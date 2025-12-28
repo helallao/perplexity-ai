@@ -352,6 +352,31 @@ class Client:
 }
 ```
 
+## MCP Server (fastmcp)
+
+Run the MCP server to expose Perplexity tools via stdio or HTTP using FastMCP.
+
+```bash
+# stdio (default)
+python -m perplexity.mcp_server
+
+# HTTP transport
+python -m perplexity.mcp_server --transport http --host 0.0.0.0 --port 8000
+```
+
+Optional: set cookies for pro modes before starting the server:
+
+```bash
+export PPLX_NEXT_AUTH_CSRF_TOKEN="..."
+export PPLX_SESSION_TOKEN="..."
+```
+
+Tools:
+- `list_models`: returns `modes`, `model_mappings`, and `labs_models`.
+- `search`: wraps `Client.search` (non-streaming). Supports `query`, `mode`, `model`, `sources`, `language`, `incognito`, and optional `files` (dict or iterable of file paths).
+
+Both transports share the same tool definitions; HTTP responses are JSON.
+
 ### Custom Exceptions
 
 ```python

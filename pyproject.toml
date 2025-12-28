@@ -30,6 +30,7 @@ dependencies = [
     "curl_cffi>=0.5.7",
     "websocket-client>=1.9.0; python_version >= '3.9'",
     "websocket-client>=1.5.0,<1.9.0; python_version < '3.9'",
+    "fastmcp>=0.1.0",
 ]
 
 [project.optional-dependencies]

@@ -1,1 +1,2 @@
 curl_cffi
+fastmcp>=0.1.0
