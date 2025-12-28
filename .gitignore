@@ -7,3 +7,5 @@ logs
 openspec
 .mcp.json
 mcp_test_results.txt
+.env
+*.log

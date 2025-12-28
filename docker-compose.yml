@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  perplexity-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: perplexity-mcp
+    ports:
+      - "${MCP_PORT:-8000}:8000"
+    environment:
+      # MCP 认证密钥
+      - MCP_TOKEN=${MCP_TOKEN:-sk-123456}
+      # Perplexity 账户凭证 (可选，用于高级功能)
+      - PPLX_NEXT_AUTH_CSRF_TOKEN=${PPLX_NEXT_AUTH_CSRF_TOKEN:-}
+      - PPLX_SESSION_TOKEN=${PPLX_SESSION_TOKEN:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # 资源限制 (可选)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+# 网络配置 (可选)
+networks:
+  default:
+    name: perplexity-network
+
