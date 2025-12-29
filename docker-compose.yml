@@ -15,12 +15,6 @@ services:
       - PPLX_NEXT_AUTH_CSRF_TOKEN=${PPLX_NEXT_AUTH_CSRF_TOKEN:-}
       - PPLX_SESSION_TOKEN=${PPLX_SESSION_TOKEN:-}
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
     # 资源限制 (可选)
     deploy:
       resources:
