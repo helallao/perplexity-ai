@@ -356,6 +356,19 @@ class Client:
 
 Run the MCP server to expose Perplexity tools via stdio or HTTP using FastMCP.
 
+claude code mcp config example
+```json
+{
+    "perplexity": {
+        "type": "http",
+        "url": "http://127.0.0.1:8000/mcp",
+        "headers": {
+            "Authorization": "Bearer sk-123456"
+        }
+    }
+}
+```
+
 ```bash
 # stdio (default)
 python -m perplexity.mcp_server
