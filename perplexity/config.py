@@ -32,7 +32,7 @@ ACCOUNT_TIMEOUT = 20  # seconds to wait for email
 # Search Modes
 SEARCH_MODES = ["auto", "pro", "reasoning", "deep research"]
 SEARCH_SOURCES = ["web", "scholar", "social"]
-SEARCH_LANGUAGES = ["en-US", "en-GB", "pt-BR", "es-ES", "fr-FR", "de-DE"]
+SEARCH_LANGUAGES = ["en-US", "en-GB", "pt-BR", "es-ES", "fr-FR", "de-DE", "zh-CN"]
 
 # Model Mappings
 MODEL_MAPPINGS: Dict[str, Dict[str, str]] = {
