@@ -2,6 +2,7 @@ LICENSE
 README.md
 pyproject.toml
 perplexity/__init__.py
+perplexity/cli.py
 perplexity/client.py
 perplexity/config.py
 perplexity/driver.py
@@ -13,11 +14,13 @@ perplexity/utils.py
 perplexity_api.egg-info/PKG-INFO
 perplexity_api.egg-info/SOURCES.txt
 perplexity_api.egg-info/dependency_links.txt
+perplexity_api.egg-info/entry_points.txt
 perplexity_api.egg-info/requires.txt
 perplexity_api.egg-info/top_level.txt
 perplexity_async/__init__.py
 perplexity_async/client.py
 perplexity_async/emailnator.py
 perplexity_async/labs.py
+tests/test_cli.py
 tests/test_config.py
 tests/test_utils.py

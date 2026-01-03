@@ -8,6 +8,7 @@ Perplexity AI is a Python module that leverages [Emailnator](https://emailnator.
 
 ## Features
 
+- **Command-Line Interface**: User-friendly CLI built with Typer for quick queries
 - **Account Generation**: Automatically generate Gmail accounts using Emailnator
 - **Unlimited Pro Queries**: Bypass query limits by creating new accounts
 - **Web Interface**: Automate account creation and usage via a browser
@@ -45,7 +46,25 @@ This includes testing tools (pytest, pytest-cov, pytest-asyncio), linting (flake
 
 ## Quick Start
 
-### Basic Usage
+### Command-Line Interface
+
+```bash
+# Basic search
+perplexity search "What is artificial intelligence?"
+
+# Search with specific mode and sources
+perplexity search "Latest AI research" --mode pro --source scholar
+
+# View available options
+perplexity info
+
+# Create account for pro features
+perplexity create-account emailnator_cookies.json --output account.json
+```
+
+For complete CLI documentation, see [CLI.md](docs/CLI.md).
+
+### Python API - Basic Usage
 
 ```python
 import perplexity
@@ -104,6 +123,7 @@ asyncio.run(main())
 
 ## Documentation
 
+- **[CLI Documentation](docs/CLI.md)** - Complete command-line interface guide
 - **[Examples](examples/)** - Practical examples for common use cases
 - **[Changelog](docs/CHANGELOG.md)** - Bug fixes and changes history
 - **[Improvements](docs/IMPROVEMENTS.md)** - Suggested improvements and roadmap
