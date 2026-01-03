@@ -25,6 +25,103 @@ perplexity info
 
 ## Commands
 
+### `auth`
+
+Authenticate with Perplexity AI via browser login. This is the easiest way to get authentication cookies.
+
+#### Usage
+
+```bash
+# BEST: Connect to Chrome via CDP (most reliable)
+perplexity auth --cdp-port 9222
+
+# Alternative: Use Chrome profile
+perplexity auth --user-data-dir "~/.config/google-chrome"
+
+# Not recommended: Basic (will face Cloudflare)
+perplexity auth
+```
+
+#### How it Works - CDP Method (Recommended)
+
+The CDP (Chrome DevTools Protocol) method is the most reliable:
+
+1. **Start Chrome with remote debugging**:
+   ```bash
+   # Windows
+   chrome.exe --remote-debugging-port=9222
+   
+   # Linux/Mac
+   google-chrome --remote-debugging-port=9222
+   
+   # Or add to Chrome shortcut: --remote-debugging-port=9222
+   ```
+
+2. **Log in to Perplexity manually** in that Chrome window
+
+3. **Run the auth command**:
+   ```bash
+   perplexity auth --cdp-port 9222
+   ```
+
+4. **Press Ctrl+C** to save cookies and exit
+
+**Advantages of CDP:**
+- ✅ No Cloudflare protection issues
+- ✅ Uses your real browser session
+- ✅ No browser detection
+- ✅ Most reliable method
+- ✅ Can keep Chrome open after saving cookies
+
+#### Options
+
+- `--output, -o`: Save authentication cookies to file (default: `perplexity_cookies.json`)
+- `--cdp-port, -p`: Connect to Chrome via CDP on this port (recommended)
+- `--user-data-dir, -u`: Path to Chrome user data directory (alternative method)
+
+#### Examples
+
+```bash
+# RECOMMENDED: CDP method
+# Step 1: Start Chrome with debugging
+chrome.exe --remote-debugging-port=9222
+
+# Step 2: Connect and save cookies
+perplexity auth --cdp-port 9222
+
+# Alternative: User data directory (Windows)
+perplexity auth --user-data-dir "C:\Users\YourName\AppData\Local\Google\Chrome\User Data"
+
+# Alternative: User data directory (Linux)
+perplexity auth --user-data-dir ~/.config/google-chrome
+
+# Custom output file
+perplexity auth --cdp-port 9222 --output my_cookies.json
+
+# Use the saved cookies
+perplexity search "Complex query" --cookies my_cookies.json --mode pro
+```
+
+#### Troubleshooting CDP Connection
+
+If `--cdp-port` fails to connect:
+
+1. **Make sure Chrome is running** with the debug port
+2. **Check the port number** matches (default 9222)
+3. **Try this command** to verify Chrome is listening:
+   ```bash
+   curl http://localhost:9222/json/version
+   ```
+4. **No other debugger** should be connected (VS Code, etc.)
+
+#### Notes
+
+- **CDP is the recommended method** - works like the existing driver.py
+- Uses regular playwright for CDP, patchright for persistent context
+- Cookies remain valid for an extended period
+- CDP doesn't close your Chrome - you can keep using it
+- User data directory requires Chrome to be closed first
+
 ### `search`
 
 Search using Perplexity AI with various modes and options.
@@ -140,7 +237,47 @@ This command shows:
 
 ## Authentication
 
-### Getting Perplexity Cookies
+### Method 1: Using `perplexity auth` with CDP (Recommended)
+
+The CDP (Chrome DevTools Protocol) method is the most reliable and bypasses all Cloudflare issues:
+
+**Step 1: Start Chrome with remote debugging**
+```bash
+# Windows
+chrome.exe --remote-debugging-port=9222
+
+# Linux
+google-chrome --remote-debugging-port=9222
+
+# macOS
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+```
+
+**Step 2: Log in to Perplexity** in that Chrome window manually
+
+**Step 3: Run auth command**
+```bash
+perplexity auth --cdp-port 9222
+```
+
+**Step 4: Press Ctrl+C** to save cookies
+
+This method:
+1. Connects to your real Chrome browser via CDP
+2. Uses your actual browser session (no Cloudflare issues)
+3. Extracts cookies from the real logged-in session
+4. Works 100% reliably - same as driver.py approach
+
+**Advantages:**
+- ✅ No Cloudflare protection
+- ✅ No browser detection
+- ✅ Uses real browser session
+- ✅ Most reliable method
+- ✅ Keep Chrome open after
+
+### Method 2: Manual Cookie Export
+
+#### Getting Perplexity Cookies
 
 1. Open [Perplexity.ai](https://perplexity.ai/) and log in to your account
 2. Press F12 or Ctrl+Shift+I to open developer tools
@@ -160,7 +297,9 @@ Example cookies.json:
 }
 ```
 
-### Getting Emailnator Cookies
+### Method 3: Programmatic Account Creation
+
+#### Getting Emailnator Cookies
 
 1. Open [Emailnator.com](https://emailnator.com/) and verify you're human
 2. Follow the same process as above (F12 → Network → Refresh → Copy as cURL)
@@ -210,6 +349,72 @@ The CLI provides clear error messages:
 - File not found: `Error: File not found: document.pdf`
 - Network errors: `Error during search: [error details]`
 
+## Troubleshooting
+
+### Cloudflare Protection / "Checking your browser" Loop
+
+**Problem**: Browser gets stuck on "Checking your browser before accessing perplexity.ai"
+
+**Solution 1 (BEST)**: Use CDP to connect to your real Chrome:
+
+```bash
+# Step 1: Start Chrome with debugging
+chrome.exe --remote-debugging-port=9222
+
+# Step 2: Log in to Perplexity manually in that Chrome
+
+# Step 3: Extract cookies
+perplexity auth --cdp-port 9222
+```
+
+**Solution 2**: Use user data directory (requires Chrome to be closed):
+
+```bash
+# Windows
+perplexity auth --user-data-dir "C:\Users\YourName\AppData\Local\Google\Chrome\User Data"
+
+# Linux
+perplexity auth --user-data-dir ~/.config/google-chrome
+```
+
+### CDP Connection Failed
+
+**Problem**: `Failed to connect to Chrome on port 9222`
+
+**Solution**:
+1. Make sure Chrome is running with `--remote-debugging-port=9222`
+2. Verify Chrome is listening:
+   ```bash
+   curl http://localhost:9222/json/version
+   ```
+3. Close other debuggers (VS Code, DevTools)
+4. Try a different port (9223, 9224, etc.)
+
+### Google "Untrusted" Warnings
+
+**Problem**: Browser shows warnings about untrusted or automated browser
+
+**Solution**: Use CDP method - it connects to your real Chrome, not an automated one.
+
+### No Cookies Saved
+
+**Problem**: Command completes but no cookies are saved
+
+**Solution**: 
+1. Make sure you're logged in to Perplexity
+2. Wait for the page to fully load
+3. Press Ctrl+C to force save
+4. Check if `next-auth` cookies exist in saved file
+
+### Browser Doesn't Open (persistent context method)
+
+**Problem**: Command runs but no browser window appears
+
+**Solution**:
+1. Make sure Chrome is installed
+2. Install chromium for patchright: `patchright install chromium`
+3. Try CDP method instead (more reliable)
+
 ## Tips
 
 1. **Use streaming for long responses**: Add `--stream` for real-time output
@@ -217,6 +422,7 @@ The CLI provides clear error messages:
 3. **Use scholar sources for research**: `--source scholar` for academic papers
 4. **Create accounts for pro features**: Use `create-account` to get pro queries
 5. **Specify models for better results**: Use `--model` with appropriate mode
+6. **Always use --user-data-dir for auth**: Prevents Cloudflare and detection issues
 
 ## Environment
 

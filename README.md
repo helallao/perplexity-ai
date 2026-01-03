@@ -49,17 +49,21 @@ This includes testing tools (pytest, pytest-cov, pytest-asyncio), linting (flake
 ### Command-Line Interface
 
 ```bash
+# RECOMMENDED: Authenticate using CDP (most reliable - no Cloudflare issues)
+# Step 1: Start Chrome with debugging
+chrome.exe --remote-debugging-port=9222
+
+# Step 2: Log in to Perplexity manually, then save cookies
+perplexity auth --cdp-port 9222
+
 # Basic search
 perplexity search "What is artificial intelligence?"
 
-# Search with specific mode and sources
-perplexity search "Latest AI research" --mode pro --source scholar
+# Search with authentication for pro features
+perplexity search "Latest AI research" --mode pro --source scholar --cookies perplexity_cookies.json
 
 # View available options
 perplexity info
-
-# Create account for pro features
-perplexity create-account emailnator_cookies.json --output account.json
 ```
 
 For complete CLI documentation, see [CLI.md](docs/CLI.md).
@@ -290,6 +294,43 @@ asyncio.run(test())
 ## How to Get Cookies
 
 ### Perplexity (to use your own account)
+
+#### Method 1: Using CLI with CDP (Recommended)
+The most reliable way to get cookies - uses CDP to connect to your real Chrome browser:
+
+**Step 1: Start Chrome with remote debugging**
+```bash
+# Windows
+chrome.exe --remote-debugging-port=9222
+
+# Linux
+google-chrome --remote-debugging-port=9222
+
+# macOS
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+```
+
+**Step 2: Log in to Perplexity** manually in that Chrome window
+
+**Step 3: Run auth command**
+```bash
+perplexity auth --cdp-port 9222
+```
+
+This will:
+1. Connect to your real Chrome browser via CDP
+2. Extract cookies from your logged-in session
+3. Save cookies to `perplexity_cookies.json`
+4. Work 100% reliably without Cloudflare issues
+
+**Why CDP is best:**
+- ✅ No Cloudflare protection issues
+- ✅ No browser detection
+- ✅ Uses your actual logged-in session
+- ✅ Most reliable method (same as driver.py)
+- ✅ You can keep using Chrome after
+
+#### Method 2: Manual Cookie Export
 * Open [Perplexity.ai](https://perplexity.ai/) website and login to your account.
 * Click F12 or ``Ctrl + Shift + I`` to open inspector.
 * Go to the "Network" tab in the inspector.
