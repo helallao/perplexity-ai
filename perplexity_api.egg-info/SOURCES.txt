@@ -21,5 +21,6 @@ perplexity_async/__init__.py
 perplexity_async/client.py
 perplexity_async/emailnator.py
 perplexity_async/labs.py
+tests/test_cli.py
 tests/test_config.py
 tests/test_utils.py

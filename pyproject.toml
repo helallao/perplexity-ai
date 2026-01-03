@@ -58,7 +58,7 @@ Repository = "https://github.com/ESousa97/perplexity-ai"
 Issues = "https://github.com/ESousa97/perplexity-ai/issues"
 
 [project.scripts]
-perplexity = "perplexity.cli:app"
+perplexity = "perplexity.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["perplexity*", "perplexity_async*"]
