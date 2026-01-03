@@ -172,6 +172,10 @@ class Client:
         uploaded_files = []
         for filename, file in files.items():
             file_type = mimetypes.guess_type(filename)[0]
+            # Default to text/plain if MIME type cannot be determined
+            if file_type is None:
+                file_type = "text/plain"
+                
             file_upload_info = (
                 self.session.post(
                     ENDPOINT_UPLOAD_URL,
@@ -185,6 +189,13 @@ class Client:
                     },
                 )
             ).json()
+            
+            # Check for error or rate limiting in response
+            if "error" in file_upload_info and file_upload_info["error"]:
+                raise Exception(f"File upload error for {filename}: {file_upload_info['error']}")
+            
+            if "fields" not in file_upload_info:
+                raise Exception(f"Invalid file upload response for {filename}: {file_upload_info}")
 
             # Upload the file to the server
             mp = CurlMime()
