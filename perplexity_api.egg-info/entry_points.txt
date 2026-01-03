@@ -1,0 +1,2 @@
+[console_scripts]
+perplexity = perplexity.cli:app
