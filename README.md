@@ -1,6 +1,6 @@
 # Perplexity AI
 
-![Tests](https://github.com/yourusername/perplexity-ai/workflows/Tests/badge.svg)
+![Tests](https://github.com/helallao/perplexity-ai/workflows/Tests/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
