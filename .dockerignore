@@ -1,0 +1,7 @@
+.git
+.worktrees
+__pycache__
+*.pyc
+tests
+images
+perplexity.log

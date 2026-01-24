@@ -101,6 +101,32 @@ async def main():
 asyncio.run(main())
 ```
 
+## FastAPI Service
+
+Run the HTTP service locally:
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Optional cookies via environment (request body can override):
+
+```bash
+export PPLX_COOKIES_JSON='{"next-auth.csrf-token":"your-token","next-auth.session-token":"your-session"}'
+```
+
+Example requests:
+
+```bash
+curl -X POST http://localhost:8000/search \\
+  -H "Content-Type: application/json" \\
+  -d '{"query":"Hello","mode":"auto"}'
+
+curl -N -X POST http://localhost:8000/search/stream \\
+  -H "Content-Type: application/json" \\
+  -d '{"query":"Hello","mode":"auto"}'
+```
+
 ## Documentation
 
 - **[Examples](examples/)** - Practical examples for common use cases

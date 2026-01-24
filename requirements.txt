@@ -1,1 +1,4 @@
 curl_cffi
+fastapi>=0.109
+uvicorn>=0.27
+python-multipart>=0.0.9
