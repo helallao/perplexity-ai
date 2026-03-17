@@ -27,7 +27,10 @@ class LabsClient:
 
     def __init__(self):
         # Initialize HTTP session with default headers
-        self.session = requests.Session(headers=DEFAULT_HEADERS.copy())
+        self.session = requests.Session(
+            headers=DEFAULT_HEADERS.copy(),
+            impersonate="chrome"
+        )
 
         # Generate a unique timestamp for session identification
         self.timestamp = format(random.getrandbits(32), "08x")
