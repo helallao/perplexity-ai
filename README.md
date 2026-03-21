@@ -34,6 +34,12 @@ pip install -e ".[driver]"
 patchright install chromium
 ```
 
+### With MCP Server
+
+```bash
+pip install -e ".[mcp]"
+```
+
 ### Development Installation
 
 ```bash
@@ -41,6 +47,115 @@ pip install -e ".[dev]"
 ```
 
 This includes testing tools (pytest, pytest-cov, pytest-asyncio), linting (flake8, black, isort, mypy), and all optional dependencies.
+
+## MCP Server
+
+This project includes an MCP (Model Context Protocol) server that exposes Perplexity search as tools for Claude Code and other MCP clients. It works without an API key by using the same reverse-engineered web interface as the rest of this library.
+
+### Installation
+
+```bash
+pip install -e ".[mcp]"
+```
+
+### Running the Server
+
+The server supports two transports, controlled by the `MCP_TRANSPORT` environment variable (default: `stdio`).
+
+#### stdio (default)
+
+Used by local MCP clients like Claude Code and Claude Desktop. The client spawns the process directly.
+
+```bash
+perplexity-mcp
+```
+
+Add to Claude Code:
+
+```bash
+claude mcp add perplexity -- perplexity-mcp
+```
+
+Manual config:
+
+```json
+{
+  "mcpServers": {
+    "perplexity": {
+      "command": "perplexity-mcp",
+      "env": {
+        "PERPLEXITY_COOKIES": "{\"next-auth.session-token\": \"...\"}"
+      }
+    }
+  }
+}
+```
+
+#### HTTP (network/remote)
+
+Runs a persistent HTTP server that multiple clients can connect to over the network. Use this when you want to share one server instance across multiple clients or machines.
+
+**1. Start the server:**
+
+```bash
+MCP_TRANSPORT=http perplexity-mcp
+```
+
+Defaults to `127.0.0.1:8000`. To bind to all interfaces or change the port:
+
+```bash
+MCP_TRANSPORT=http MCP_HOST=0.0.0.0 MCP_PORT=9000 perplexity-mcp
+```
+
+To include cookies:
+
+```bash
+MCP_TRANSPORT=http PERPLEXITY_COOKIES='{"next-auth.session-token": "..."}' perplexity-mcp
+```
+
+The MCP endpoint will be available at `http://<host>:<port>/mcp`.
+
+**2. Add to Claude Code:**
+
+```bash
+claude mcp add --transport http perplexity http://127.0.0.1:8000/mcp
+```
+
+Adjust the URL if you changed the host or port. For a remote machine, replace `127.0.0.1` with its address.
+
+**3. Verify:**
+
+```bash
+claude mcp list
+```
+
+---
+
+The `PERPLEXITY_COOKIES` environment variable is optional for both transports. If not set, the server runs anonymously with access to free (auto mode) queries only. Set it to a JSON string of your Perplexity cookies to enable pro, reasoning, and deep research modes. See [How To Get Cookies](#how-to-get-cookies) for instructions.
+
+### Available Tools
+
+| Tool | Mode | Description |
+|------|------|-------------|
+| `perplexity_ask` | `auto` | General-purpose question answering |
+| `perplexity_research` | `deep research` | In-depth research on a topic |
+| `perplexity_reason` | `reasoning` | Step-by-step reasoning through a problem |
+| `perplexity_search` | `pro` + web sources | Web search |
+
+### Differences from the Official MCP
+
+The [official `@perplexity-ai/mcp-server`](https://www.npmjs.com/package/@perplexity-ai/mcp-server) requires a paid Perplexity API key. This server uses the reverse-engineered web interface instead. As a result, the following features available in the official MCP are not supported here:
+
+| Feature | Official MCP | This server |
+|---------|-------------|-------------|
+| No API key required | No | **Yes** |
+| `messages` array input | Yes | No (single `query` string only) |
+| `search_recency_filter` | Yes | No |
+| `search_domain_filter` | Yes | No |
+| `search_context_size` | Yes | No |
+| `reasoning_effort` | Yes | No |
+| `strip_thinking` | Yes | No |
+| Structured search results (citations, images) | Yes | No (plain text answer only) |
 
 ## Quick Start
 
