@@ -31,8 +31,7 @@ def main():
         print("No cookies provided. Showing example code only.\n")
         print("Example code:")
         print("-" * 60)
-        print(
-            """
+        print("""
 # With actual cookies:
 client = perplexity.Client(cookies)
 
@@ -59,8 +58,7 @@ response = client.search(
     'Compare these two documents',
     files=files
 )
-        """
-        )
+        """)
         print("-" * 60)
         return
 

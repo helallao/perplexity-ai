@@ -27,8 +27,7 @@ def main():
         print("No Emailnator cookies provided. Showing example code only.\n")
         print("Example code:")
         print("-" * 60)
-        print(
-            """
+        print("""
 # With actual Emailnator cookies:
 client = perplexity.Client()
 
@@ -45,8 +44,7 @@ response = client.search(
     mode='pro',  # or 'reasoning', 'deep research'
     model='gpt-4.5'
 )
-        """
-        )
+        """)
         print("-" * 60)
         return
 
