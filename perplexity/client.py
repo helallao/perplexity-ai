@@ -6,12 +6,13 @@
 # mimetypes: Guessing MIME types of files
 # uuid: Generating unique identifiers
 # curl_cffi: HTTP requests and multipart form data handling
+import json
+import mimetypes
+import random
 import re
 import sys
-import json
-import random
-import mimetypes
 from uuid import uuid4
+
 from curl_cffi import CurlMime, requests
 
 from .config import (

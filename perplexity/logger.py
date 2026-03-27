@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from .config import LOG_FORMAT, LOG_LEVEL, LOG_FILE
+from .config import LOG_FILE, LOG_FORMAT, LOG_LEVEL
 
 
 def setup_logger(

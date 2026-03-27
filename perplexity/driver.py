@@ -10,9 +10,11 @@ import re
 import time
 from threading import Thread
 from urllib.parse import unquote
+
 from curl_cffi import requests
-from playwright.sync_api import sync_playwright
 from patchright.sync_api import sync_playwright as sync_patchright
+from playwright.sync_api import sync_playwright
+
 from .emailnator import Emailnator
 
 

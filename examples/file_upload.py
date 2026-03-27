@@ -5,8 +5,9 @@ This example demonstrates how to upload files with queries
 for document analysis and Q&A.
 """
 
-import perplexity
 from pathlib import Path
+
+import perplexity
 
 
 def main():

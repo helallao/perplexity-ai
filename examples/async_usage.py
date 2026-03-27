@@ -6,6 +6,7 @@ for non-blocking operations and concurrent queries.
 """
 
 import asyncio
+
 import perplexity_async
 
 

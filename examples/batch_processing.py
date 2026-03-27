@@ -6,8 +6,9 @@ efficiently using async batch processing.
 """
 
 import asyncio
-import perplexity_async
 from time import time
+
+import perplexity_async
 
 
 async def process_queries_sequential(queries):
