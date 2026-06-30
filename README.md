@@ -31,8 +31,10 @@ pip install -e .
 
 ```bash
 pip install -e ".[driver]"
-patchright install chromium
+patchright install chrome
 ```
+
+> If `patchright install chrome` fails, try `patchright install chromium` as an alternative.
 
 ### With MCP Server
 
