@@ -16,6 +16,15 @@ mcp = FastMCP(
 )
 
 
+def _extract_answer(resp: dict) -> str:
+    # search() responses have no top-level "answer" key — the text lives in
+    # the ask_text block's markdown_block.answer.
+    for block in resp.get("blocks", []):
+        if block.get("intended_usage") == "ask_text":
+            return block.get("markdown_block", {}).get("answer", "")
+    return resp.get("answer", "")
+
+
 def perplexity_ask(query: str) -> str:
     """Ask Perplexity a question and get a concise AI-generated answer.
 
@@ -28,7 +37,7 @@ def perplexity_ask(query: str) -> str:
     - Returns plain text only (no citations, images, or structured results).
     - Answers may not reflect the very latest real-time information.
     """
-    return client.search(query, mode="auto").get("answer", "")
+    return _extract_answer(client.search(query, mode="auto"))
 
 
 def perplexity_research(query: str) -> str:
@@ -44,7 +53,7 @@ def perplexity_research(query: str) -> str:
     - Returns plain text only (no citations, images, or structured results).
     - Only one model is available in this mode (cannot select a specific model).
     """
-    return client.search(query, mode="deep research").get("answer", "")
+    return _extract_answer(client.search(query, mode="deep research"))
 
 
 def perplexity_reason(query: str) -> str:
@@ -59,7 +68,7 @@ def perplexity_reason(query: str) -> str:
     - Does not support follow-up context, file uploads, or source filtering.
     - Returns plain text only (no citations, images, or structured results).
     """
-    return client.search(query, mode="reasoning").get("answer", "")
+    return _extract_answer(client.search(query, mode="reasoning"))
 
 
 def perplexity_search(query: str) -> str:
@@ -74,7 +83,7 @@ def perplexity_search(query: str) -> str:
     - Does not support follow-up context or file uploads.
     - Returns plain text only (no citations, images, or structured results).
     """
-    return client.search(query, mode="pro", sources=["web"]).get("answer", "")
+    return _extract_answer(client.search(query, mode="pro", sources=["web"]))
 
 
 def main():
