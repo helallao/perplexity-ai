@@ -5,6 +5,8 @@ This module contains all configurable constants used throughout the library.
 Modify these values to customize behavior without changing core code.
 """
 
+import os
+from pathlib import Path
 from typing import Dict
 
 # API Configuration
@@ -123,7 +125,11 @@ RETRY_EXCEPTIONS = (ConnectionError, TimeoutError)
 # Logging Configuration
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_LEVEL = "INFO"
-LOG_FILE = "perplexity.log"
+# Default log path lives under the XDG state dir so the stdio MCP server never
+# writes into the client's (often read-only or unrelated) working directory.
+# An explicit LOG_FILE / logger parameter still overrides this default.
+_STATE_HOME = os.environ.get("XDG_STATE_HOME") or str(Path.home() / ".local" / "state")
+LOG_FILE = str(Path(_STATE_HOME) / "perplexity-ai" / "perplexity.log")
 
 # Rate Limiting
 RATE_LIMIT_MIN_DELAY = 1.0  # seconds

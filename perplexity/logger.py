@@ -46,7 +46,10 @@ def setup_logger(
 
     # Console handler
     if console:
-        console_handler = logging.StreamHandler(sys.stdout)
+        # Log to stderr, not stdout: for stdio MCP transports stdout is the
+        # JSON-RPC protocol channel, and any log line there corrupts it
+        # (server shows as failed in strict clients like Claude Desktop).
+        console_handler = logging.StreamHandler(sys.stderr)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
