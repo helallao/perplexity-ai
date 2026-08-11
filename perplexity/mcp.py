@@ -2,18 +2,30 @@ import json
 import os
 import sys
 
-from mcp.server.fastmcp import FastMCP
+try:
+    # mcp >= 2.0 renamed mcp.server.fastmcp.FastMCP to
+    # mcp.server.mcpserver.MCPServer and moved host/port from the
+    # constructor to run().
+    from mcp.server.mcpserver import MCPServer as _Server
+
+    _HTTP_BIND_ON_RUN = True
+except ImportError:  # mcp 1.x
+    from mcp.server.fastmcp import FastMCP as _Server
+
+    _HTTP_BIND_ON_RUN = False
 
 from perplexity import Client
 from perplexity.logger import setup_logger
 
 logger = setup_logger("mcp")
 
-mcp = FastMCP(
-    "perplexity",
-    host=os.environ.get("MCP_HOST", "127.0.0.1"),
-    port=int(os.environ.get("MCP_PORT", "8000")),
-)
+HOST = os.environ.get("MCP_HOST", "127.0.0.1")
+PORT = int(os.environ.get("MCP_PORT", "8000"))
+
+if _HTTP_BIND_ON_RUN:
+    mcp = _Server("perplexity")
+else:
+    mcp = _Server("perplexity", host=HOST, port=PORT)
 
 
 def _extract_answer(resp: dict) -> str:
@@ -120,6 +132,8 @@ def main():
 
     if transport == "stdio":
         mcp.run()
+    elif _HTTP_BIND_ON_RUN:
+        mcp.run(transport="streamable-http", host=HOST, port=PORT)
     else:
         mcp.run(transport="streamable-http")
 
