@@ -17,7 +17,7 @@ from threading import Thread
 from curl_cffi import requests
 from websocket import WebSocketApp
 
-from .config import DEFAULT_HEADERS, ENDPOINT_SOCKET_IO
+from .config import DEFAULT_HEADERS, ENDPOINT_SOCKET_IO, LABS_MODELS
 
 
 class LabsClient:
@@ -100,13 +100,7 @@ class LabsClient:
         Returns:
         - The final response or a generator for streaming responses.
         """
-        assert model in [
-            "r1-1776",
-            "sonar-pro",
-            "sonar",
-            "sonar-reasoning-pro",
-            "sonar-reasoning",
-        ], "Invalid model."
+        assert model in LABS_MODELS, f"Invalid model '{model}'. Must be one of: {', '.join(LABS_MODELS)}"
 
         self.last_answer = None
         self.history.append({"role": "user", "content": query})

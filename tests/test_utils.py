@@ -26,6 +26,15 @@ def test_validate_search_params_requires_own_account() -> None:
         validate_search_params("pro", "sonar", ["web"], own_account=False)
 
 
+def test_validate_search_params_sources_type_and_values() -> None:
+    print("console.log -> testing sources validation")
+    with pytest.raises(ValidationError, match="must be a list or tuple"):
+        validate_search_params("auto", None, "web", own_account=False)  # type: ignore
+
+    with pytest.raises(ValidationError, match="Invalid sources"):
+        validate_search_params("auto", None, ["invalid_source"], own_account=False)
+
+
 def test_retry_with_backoff_eventually_succeeds(monkeypatch) -> None:
     print("console.log -> exercising retry_with_backoff decorator")
     sleep_calls = []

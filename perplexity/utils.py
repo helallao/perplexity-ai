@@ -160,6 +160,9 @@ def validate_search_params(
         )
 
     # Validate sources
+    if not isinstance(sources, (list, tuple)):
+        raise ValidationError("Sources must be a list or tuple of strings")
+
     invalid_sources = [s for s in sources if s not in SEARCH_SOURCES]
     if invalid_sources:
         raise ValidationError(
