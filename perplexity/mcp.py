@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from typing import Any, Optional
 
 try:
     # mcp >= 2.0 renamed mcp.server.fastmcp.FastMCP to
@@ -27,13 +28,33 @@ if _HTTP_BIND_ON_RUN:
 else:
     mcp = _Server("perplexity", host=HOST, port=PORT)
 
+client: Optional[Client] = None
 
-def _extract_answer(resp: dict) -> str:
-    # search() responses have no top-level "answer" key — the text lives in
-    # the ask_text block's markdown_block.answer.
+
+def _get_client() -> Client:
+    """Lazily initialize and return the global Client instance."""
+    global client
+    if client is None:
+        cookies_env = os.environ.get("PERPLEXITY_COOKIES")
+        cookies = {}
+        if cookies_env:
+            try:
+                cookies = json.loads(cookies_env)
+            except json.JSONDecodeError:
+                logger.error("PERPLEXITY_COOKIES is not valid JSON.")
+        client = Client(cookies)
+    return client
+
+
+def _extract_answer(resp: Any) -> str:
+    """Safely extract the markdown answer text from search response dict."""
+    if not isinstance(resp, dict):
+        return str(resp) if resp else ""
     for block in resp.get("blocks", []):
-        if block.get("intended_usage") == "ask_text":
-            return block.get("markdown_block", {}).get("answer", "")
+        if isinstance(block, dict) and block.get("intended_usage") == "ask_text":
+            markdown_block = block.get("markdown_block", {})
+            if isinstance(markdown_block, dict):
+                return markdown_block.get("answer", "")
     return resp.get("answer", "")
 
 
@@ -49,7 +70,13 @@ def perplexity_ask(query: str) -> str:
     - Returns plain text only (no citations, images, or structured results).
     - Answers may not reflect the very latest real-time information.
     """
-    return _extract_answer(client.search(query, mode="auto"))
+    cli = _get_client()
+    try:
+        resp = cli.search(query, mode="auto")
+        return _extract_answer(resp)
+    except Exception as e:
+        logger.error(f"perplexity_ask error: {e}")
+        return f"Error executing query: {e}"
 
 
 def perplexity_research(query: str) -> str:
@@ -65,7 +92,13 @@ def perplexity_research(query: str) -> str:
     - Returns plain text only (no citations, images, or structured results).
     - Only one model is available in this mode (cannot select a specific model).
     """
-    return _extract_answer(client.search(query, mode="deep research"))
+    cli = _get_client()
+    try:
+        resp = cli.search(query, mode="deep research")
+        return _extract_answer(resp)
+    except Exception as e:
+        logger.error(f"perplexity_research error: {e}")
+        return f"Error executing research query: {e}"
 
 
 def perplexity_reason(query: str) -> str:
@@ -80,7 +113,13 @@ def perplexity_reason(query: str) -> str:
     - Does not support follow-up context, file uploads, or source filtering.
     - Returns plain text only (no citations, images, or structured results).
     """
-    return _extract_answer(client.search(query, mode="reasoning"))
+    cli = _get_client()
+    try:
+        resp = cli.search(query, mode="reasoning")
+        return _extract_answer(resp)
+    except Exception as e:
+        logger.error(f"perplexity_reason error: {e}")
+        return f"Error executing reasoning query: {e}"
 
 
 def perplexity_search(query: str) -> str:
@@ -95,7 +134,13 @@ def perplexity_search(query: str) -> str:
     - Does not support follow-up context or file uploads.
     - Returns plain text only (no citations, images, or structured results).
     """
-    return _extract_answer(client.search(query, mode="pro", sources=["web"]))
+    cli = _get_client()
+    try:
+        resp = cli.search(query, mode="pro", sources=["web"])
+        return _extract_answer(resp)
+    except Exception as e:
+        logger.error(f"perplexity_search error: {e}")
+        return f"Error executing search query: {e}"
 
 
 def main():
