@@ -20,8 +20,10 @@ from .config import (
     ENDPOINT_AUTH_SIGNIN,
     ENDPOINT_SSE_ASK,
     ENDPOINT_UPLOAD_URL,
+    SIGNIN_URL_PATTERN,
 )
 from .emailnator import Emailnator
+from .utils import parse_nested_json_response
 
 
 class Client:
@@ -29,7 +31,9 @@ class Client:
     A client for interacting with the Perplexity AI API.
     """
 
-    def __init__(self, cookies={}):
+    def __init__(self, cookies=None):
+        if cookies is None:
+            cookies = {}
         # Initialize an HTTP session with default headers and optional cookies
         self.session = requests.Session(
             headers=DEFAULT_HEADERS.copy(),
@@ -43,9 +47,7 @@ class Client:
         self.file_upload = 0 if not cookies else float("inf")  # Remaining file uploads
 
         # Regular expression for extracting sign-in links
-        self.signin_regex = re.compile(
-            r'"(https://www\\.perplexity\\.ai/api/auth/callback/email\\?' r'callbackUrl=.*?)"'
-        )
+        self.signin_regex = re.compile(SIGNIN_URL_PATTERN)
 
         # Unique timestamp for session identification
         self.timestamp = format(random.getrandbits(32), "08x")
@@ -109,8 +111,8 @@ class Client:
         query,
         mode="auto",
         model=None,
-        sources=["web"],
-        files={},
+        sources=None,
+        files=None,
         stream=False,
         language="en-US",
         follow_up=None,
@@ -130,6 +132,11 @@ class Client:
         - follow_up: Information for follow-up queries.
         - incognito: Whether to enable incognito mode.
         """
+        if sources is None:
+            sources = ["web"]
+        if files is None:
+            files = {}
+
         # Validate input parameters
         assert mode in [
             "auto",
@@ -212,7 +219,7 @@ class Client:
             # Extract the uploaded file URL
             if "image/upload" in file_upload_info["s3_object_url"]:
                 uploaded_url = re.sub(
-                    r"/private/s--.*?--/v\\d+/user_uploads/",
+                    r"/private/s--.*?--/v\d+/user_uploads/",
                     "/private/user_uploads/",
                     upload_resp.json()["secure_url"],
                 )
@@ -273,29 +280,7 @@ class Client:
                 if content.startswith("event: message\r\n"):
                     try:
                         content_json = json.loads(content[len("event: message\r\ndata: ") :])
-
-                        # Parse the nested 'text' field if it exists
-                        if "text" in content_json and content_json["text"]:
-                            try:
-                                text_parsed = json.loads(content_json["text"])
-                                # Extract answer from FINAL step if available
-                                if isinstance(text_parsed, list):
-                                    for step in text_parsed:
-                                        if step.get("step_type") == "FINAL":
-                                            final_content = step.get("content", {})
-                                            if "answer" in final_content:
-                                                answer_data = json.loads(final_content["answer"])
-                                                content_json["answer"] = answer_data.get(
-                                                    "answer", ""
-                                                )
-                                                content_json["chunks"] = answer_data.get(
-                                                    "chunks", []
-                                                )
-                                                break
-                                content_json["text"] = text_parsed
-                            except (json.JSONDecodeError, TypeError, KeyError):
-                                pass
-
+                        content_json = parse_nested_json_response(content_json)
                         chunks.append(content_json)
                         yield chunks[-1]
                     except (json.JSONDecodeError, KeyError):
@@ -313,25 +298,7 @@ class Client:
             if content.startswith("event: message\r\n"):
                 try:
                     content_json = json.loads(content[len("event: message\r\ndata: ") :])
-
-                    # Parse the nested 'text' field if it exists
-                    if "text" in content_json and content_json["text"]:
-                        try:
-                            text_parsed = json.loads(content_json["text"])
-                            # Extract answer from FINAL step if available
-                            if isinstance(text_parsed, list):
-                                for step in text_parsed:
-                                    if step.get("step_type") == "FINAL":
-                                        final_content = step.get("content", {})
-                                        if "answer" in final_content:
-                                            answer_data = json.loads(final_content["answer"])
-                                            content_json["answer"] = answer_data.get("answer", "")
-                                            content_json["chunks"] = answer_data.get("chunks", [])
-                                            break
-                            content_json["text"] = text_parsed
-                        except (json.JSONDecodeError, TypeError, KeyError):
-                            pass
-
+                    content_json = parse_nested_json_response(content_json)
                     chunks.append(content_json)
                 except (json.JSONDecodeError, KeyError):
                     continue

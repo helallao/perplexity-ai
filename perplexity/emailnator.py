@@ -20,7 +20,7 @@ class Emailnator:
     def __init__(
         self,
         cookies,
-        headers={},
+        headers=None,
         domain=False,
         plus=False,
         dot=False,
@@ -31,7 +31,7 @@ class Emailnator:
         self.inbox_ads = []
 
         # Set default headers if not provided
-        if not headers:
+        if headers is None:
             headers = EMAILNATOR_HEADERS.copy()
             headers["x-xsrf-token"] = unquote(cookies["XSRF-TOKEN"])
 
@@ -122,7 +122,7 @@ class Emailnator:
             json={"email": self.email, "messageID": msg_id},
         ).text
 
-    def get(self, func, msgs=[]):
+    def get(self, func, msgs=None):
         """
         Retrieves a message that matches a given condition.
 
@@ -133,6 +133,7 @@ class Emailnator:
         Returns:
         - The first message that matches the condition.
         """
-        for msg in (msgs if msgs else self.inbox):
+        search_list = msgs if msgs is not None else self.inbox
+        for msg in search_list:
             if func(msg):
                 return msg
