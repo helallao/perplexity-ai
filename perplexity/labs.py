@@ -1,23 +1,19 @@
-# Importing necessary modules
-# ssl: SSL/TLS support for secure connections
-# json: JSON parsing and serialization
-# time: Time-related functions for delays
-# socket: Low-level networking interface
-# random: Random number generation
-# threading: For running background tasks
-# curl_cffi: HTTP requests
-# websocket: WebSocket client for real-time communication
 import json
 import random
 import socket
 import ssl
 import time
 from threading import Thread
+from typing import Any, Dict, Generator, List, Optional, Union
 
 from curl_cffi import requests
 from websocket import WebSocketApp
 
-from .config import DEFAULT_HEADERS, ENDPOINT_SOCKET_IO
+from .config import DEFAULT_HEADERS, ENDPOINT_SOCKET_IO, LABS_MODELS
+from .exceptions import AuthenticationError, NetworkError, ValidationError
+from .logger import get_logger
+
+logger = get_logger("labs")
 
 
 class LabsClient:
@@ -25,7 +21,7 @@ class LabsClient:
     A client for interacting with the Perplexity AI Labs API.
     """
 
-    def __init__(self):
+    def __init__(self, connect_timeout: float = 15.0):
         # Initialize HTTP session with default headers
         self.session = requests.Session(headers=DEFAULT_HEADERS.copy(), impersonate="chrome")
 
@@ -34,15 +30,22 @@ class LabsClient:
 
         # Establish a session with the Perplexity Labs API
         poll_url = f"{ENDPOINT_SOCKET_IO}?EIO=4&transport=polling&t={self.timestamp}"
-        self.sid = json.loads(self.session.get(poll_url).text[1:])["sid"]
-        self.last_answer = None  # Store the last response from the API
-        self.history = []  # Maintain a history of queries and responses
+        try:
+            resp = self.session.get(poll_url)
+            self.sid = json.loads(resp.text[1:])["sid"]
+        except Exception as e:
+            raise NetworkError(f"Failed to establish Labs polling session: {e}") from e
+
+        self.last_answer: Optional[Dict[str, Any]] = None  # Store the last response from the API
+        self.history: List[Dict[str, Any]] = []  # Maintain a history of queries and responses
 
         # Authenticate the session
         auth_url = (
             f"{ENDPOINT_SOCKET_IO}?EIO=4&transport=polling" f"&t={self.timestamp}&sid={self.sid}"
         )
-        assert self.session.post(auth_url, data='40{"jwt":"anonymous-ask-user"}').text == "OK"
+        auth_resp = self.session.post(auth_url, data='40{"jwt":"anonymous-ask-user"}')
+        if auth_resp.text != "OK":
+            raise AuthenticationError(f"Labs authentication failed: {auth_resp.text}")
 
         # Set up a secure WebSocket connection
         context = ssl.create_default_context()
@@ -58,13 +61,13 @@ class LabsClient:
         )
         self.ws = WebSocketApp(
             url=websocket_url,
-            header={"User-Agent": self.session.headers["User-Agent"]},
+            header={"User-Agent": self.session.headers.get("User-Agent", "")},
             cookie="; ".join(
                 [f"{key}={value}" for key, value in self.session.cookies.get_dict().items()]
             ),
             on_open=lambda ws: (ws.send("2probe"), ws.send("5")),
             on_message=self._on_message,
-            on_error=lambda ws, error: print(f"Websocket Error: {error}"),
+            on_error=lambda ws, error: logger.error(f"WebSocket error: {error}"),
             socket=self.sock,
         )
 
@@ -72,23 +75,35 @@ class LabsClient:
         Thread(target=self.ws.run_forever, daemon=True).start()
 
         # Wait until the WebSocket connection is established
+        start_time = time.time()
         while not (self.ws.sock and self.ws.sock.connected):
+            if time.time() - start_time > connect_timeout:
+                raise NetworkError("WebSocket connection to Perplexity Labs timed out")
             time.sleep(0.01)
 
-    def _on_message(self, ws, message):
+    def _on_message(self, ws, message: str) -> None:
         """
         WebSocket message handler.
         """
-        if message == "2":
-            ws.send("3")  # Respond to ping messages
+        try:
+            if message == "2":
+                ws.send("3")  # Respond to ping messages
 
-        if message.startswith("42"):
-            response = json.loads(message[2:])[1]
+            elif message.startswith("42"):
+                response = json.loads(message[2:])[1]
 
-            if "final" in response:
-                self.last_answer = response
+                if isinstance(response, dict) and "final" in response:
+                    self.last_answer = response
+        except Exception as e:
+            logger.debug(f"Error handling WebSocket message: {e}")
 
-    def ask(self, query, model="r1-1776", stream=False):
+    def ask(
+        self,
+        query: str,
+        model: str = "r1-1776",
+        stream: bool = False,
+        timeout: float = 60.0,
+    ) -> Union[Dict[str, Any], Generator[Dict[str, Any], None, None]]:
         """
         Sends a query to the Perplexity Labs API.
 
@@ -96,17 +111,15 @@ class LabsClient:
         - query: The query string.
         - model: The model to use for the query.
         - stream: Whether to stream the response.
+        - timeout: Maximum time in seconds to wait for response.
 
         Returns:
-        - The final response or a generator for streaming responses.
+        - The final response dict or a generator for streaming responses.
         """
-        assert model in [
-            "r1-1776",
-            "sonar-pro",
-            "sonar",
-            "sonar-reasoning-pro",
-            "sonar-reasoning",
-        ], "Invalid model."
+        if model not in LABS_MODELS:
+            raise ValidationError(
+                f"Invalid model '{model}'. Must be one of: {', '.join(LABS_MODELS)}"
+            )
 
         self.last_answer = None
         self.history.append({"role": "user", "content": query})
@@ -127,16 +140,22 @@ class LabsClient:
             )
         )
 
-        def stream_response():
+        def stream_response() -> Generator[Dict[str, Any], None, None]:
             """
             Generator for streaming responses.
             """
             answer = None
+            start_wait = time.time()
 
             while True:
+                if time.time() - start_wait > timeout:
+                    raise TimeoutError("Perplexity Labs query timed out waiting for response")
+
                 if self.last_answer != answer:
                     answer = self.last_answer
-                    yield answer
+                    start_wait = time.time()
+                    if answer is not None:
+                        yield answer
 
                 if self.last_answer and self.last_answer.get("final"):
                     answer = self.last_answer
@@ -144,11 +163,10 @@ class LabsClient:
                     self.history.append(
                         {
                             "role": "assistant",
-                            "content": answer["output"],
+                            "content": answer.get("output", ""),
                             "priority": 0,
                         }
                     )
-
                     return
 
                 time.sleep(0.01)
@@ -156,14 +174,18 @@ class LabsClient:
         if stream:
             return stream_response()
 
+        start_wait = time.time()
         while True:
+            if time.time() - start_wait > timeout:
+                raise TimeoutError("Perplexity Labs query timed out waiting for final answer")
+
             if self.last_answer and self.last_answer.get("final"):
                 answer = self.last_answer
                 self.last_answer = None
                 self.history.append(
                     {
                         "role": "assistant",
-                        "content": answer["output"],
+                        "content": answer.get("output", ""),
                         "priority": 0,
                     }
                 )
@@ -171,3 +193,22 @@ class LabsClient:
                 return answer
 
             time.sleep(0.01)
+
+    def close(self) -> None:
+        """Close the WebSocket connection and HTTP session."""
+        try:
+            if self.ws:
+                self.ws.close()
+        except Exception:
+            pass
+        try:
+            if self.session:
+                self.session.close()
+        except Exception:
+            pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()

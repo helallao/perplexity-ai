@@ -160,6 +160,9 @@ def validate_search_params(
         )
 
     # Validate sources
+    if not isinstance(sources, (list, tuple)):
+        raise ValidationError("Sources must be a list or tuple of strings")
+
     invalid_sources = [s for s in sources if s not in SEARCH_SOURCES]
     if invalid_sources:
         raise ValidationError(
@@ -284,20 +287,31 @@ def parse_nested_json_response(content_json: dict) -> dict:
     """
     import json
 
+    if not isinstance(content_json, dict):
+        return content_json
+
     if "text" in content_json and content_json["text"]:
         try:
-            text_parsed = json.loads(content_json["text"])
+            raw_text = content_json["text"]
+            if isinstance(raw_text, str):
+                text_parsed = json.loads(raw_text)
+            else:
+                text_parsed = raw_text
 
             if isinstance(text_parsed, list):
                 for step in text_parsed:
-                    if step.get("step_type") == "FINAL":
+                    if isinstance(step, dict) and step.get("step_type") == "FINAL":
                         final_content = step.get("content", {})
-
-                        if "answer" in final_content:
+                        if isinstance(final_content, dict) and "answer" in final_content:
                             try:
-                                answer_data = json.loads(final_content["answer"])
-                                content_json["answer"] = answer_data.get("answer", "")
-                                content_json["chunks"] = answer_data.get("chunks", [])
+                                ans_raw = final_content["answer"]
+                                if isinstance(ans_raw, str):
+                                    answer_data = json.loads(ans_raw)
+                                else:
+                                    answer_data = ans_raw
+                                if isinstance(answer_data, dict):
+                                    content_json["answer"] = answer_data.get("answer", "")
+                                    content_json["chunks"] = answer_data.get("chunks", [])
                             except (json.JSONDecodeError, TypeError):
                                 pass
                         break

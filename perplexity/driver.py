@@ -1,19 +1,29 @@
-# Importing necessary modules
-# re: Regular expressions for pattern matching
-# time: Time-related functions
-# threading: For running background tasks
-# urllib.parse: URL parsing utilities
-# curl_cffi: HTTP requests
-# playwright.sync_api: Browser automation (standard)
-# patchright.sync_api: Undetected browser automation
 import re
 import time
 from threading import Thread
+from typing import Dict, List, Optional
 from urllib.parse import unquote
+
 from curl_cffi import requests
-from playwright.sync_api import sync_playwright
 from patchright.sync_api import sync_playwright as sync_patchright
+from playwright.sync_api import sync_playwright
+
+from .config import SIGNIN_URL_PATTERN
 from .emailnator import Emailnator
+from .logger import get_logger
+
+logger = get_logger("driver")
+
+
+def _parse_cookie_header(header_str: Optional[str]) -> Dict[str, str]:
+    """Safely parse cookie header string into a dictionary."""
+    cookies = {}
+    if header_str:
+        for item in header_str.split("; "):
+            if "=" in item:
+                k, v = item.split("=", 1)
+                cookies[k.strip()] = v.strip()
+    return cookies
 
 
 class Driver:
@@ -21,17 +31,20 @@ class Driver:
 
     def __init__(self):
         # Regular expression for extracting sign-in links
-        self.signin_regex = re.compile(
-            r'"(https://www\\.perplexity\\.ai/api/auth/callback/email\\?' r'callbackUrl=.*?)"'
-        )
+        self.signin_regex = re.compile(SIGNIN_URL_PATTERN)
 
         # Flags and state variables
         self.creating_new_account = False
         self.account_creator_running = False
         self.renewing_emailnator_cookies = False
-        self.background_pages = []  # List of background browser pages
-        self.perplexity_cookies = None  # Cookies for Perplexity AI
-        self.emailnator_cookies = None  # Cookies for Emailnator
+        self.background_pages: List[Any] = []  # List of background browser pages
+        self.perplexity_cookies: Optional[Dict[str, str]] = None  # Cookies for Perplexity AI
+        self.perplexity_headers: Optional[Dict[str, str]] = None
+        self.emailnator_cookies: Optional[Dict[str, str]] = None  # Cookies for Emailnator
+        self.emailnator_headers: Optional[Dict[str, str]] = None
+        self.new_account_link: Optional[str] = None
+        self.page = None
+        self.browser = None
 
     def account_creator(self):
         """
@@ -41,17 +54,24 @@ class Driver:
 
         while True:
             if not self.new_account_link:
-                print("Creating new account")
+                logger.info("Creating new account")
 
                 while True:
                     try:
+                        if not self.emailnator_cookies or not self.perplexity_cookies:
+                            time.sleep(0.5)
+                            continue
+
+                        xsrf_token = unquote(self.emailnator_cookies.get("XSRF-TOKEN", ""))
+                        cookie_csrf = self.perplexity_cookies.get("next-auth.csrf-token", "")
+                        csrf_token = cookie_csrf.split("%")[0] if cookie_csrf else ""
+
                         # Initialize Emailnator client
+                        headers = dict(self.emailnator_headers or {})
+                        headers["x-xsrf-token"] = xsrf_token
                         emailnator_cli = Emailnator(
                             self.emailnator_cookies,
-                            {
-                                **self.emailnator_headers,
-                                "x-xsrf-token": unquote(self.emailnator_cookies["XSRF-TOKEN"]),
-                            },
+                            headers,
                         )
 
                         # Send a POST request to initiate account creation
@@ -59,9 +79,7 @@ class Driver:
                             "https://www.perplexity.ai/api/auth/signin/email",
                             data={
                                 "email": emailnator_cli.email,
-                                "csrfToken": self.perplexity_cookies["next-auth.csrf-token"].split(
-                                    "%"
-                                )[0],
+                                "csrfToken": csrf_token,
                                 "callbackUrl": "https://www.perplexity.ai/",
                                 "json": "true",
                             },
@@ -72,24 +90,25 @@ class Driver:
                         # Check if the response is successful
                         if resp.ok:
                             new_msgs = emailnator_cli.reload(
-                                wait_for=lambda x: x["subject"] == "Sign in to Perplexity",
+                                wait_for=lambda x: x.get("subject") == "Sign in to Perplexity",
                                 timeout=20,
                             )
 
                             if new_msgs:
                                 msg = emailnator_cli.get(
-                                    func=lambda x: x["subject"] == "Sign in to Perplexity"
+                                    func=lambda x: x.get("subject") == "Sign in to Perplexity"
                                 )
-                                self.new_account_link = self.signin_regex.search(
-                                    emailnator_cli.open(msg["messageID"])
-                                ).group(1)
-
-                                print("New account created\n")
-                                break
+                                if msg:
+                                    msg_body = emailnator_cli.open(msg["messageID"])
+                                    match = self.signin_regex.search(msg_body)
+                                    if match:
+                                        self.new_account_link = match.group(1)
+                                        logger.info("New account created successfully")
+                                        break
 
                     except Exception as e:
-                        print("Account creation error", e)
-                        print("Renewing emailnator cookies")
+                        logger.error(f"Account creation error: {e}")
+                        logger.info("Renewing emailnator cookies")
 
                         # Reset Emailnator cookies and wait for renewal
                         self.emailnator_cookies = None
@@ -113,9 +132,7 @@ class Driver:
             response = route.fetch()
 
             # Extract cookies from the request
-            cookies = {
-                x.split("=")[0]: x.split("=")[1] for x in request.headers["cookie"].split("; ")
-            }
+            cookies = _parse_cookie_header(request.headers.get("cookie", ""))
 
             if (
                 not self.perplexity_cookies
@@ -146,9 +163,7 @@ class Driver:
             response = route.fetch()
 
             # Extract cookies from the request
-            cookies = {
-                x.split("=")[0]: x.split("=")[1] for x in request.headers["cookie"].split("; ")
-            }
+            cookies = _parse_cookie_header(request.headers.get("cookie", ""))
 
             if (
                 not self.emailnator_cookies
@@ -162,7 +177,7 @@ class Driver:
 
                 if not self.account_creator_running:
                     self.account_creator_running = True
-                    Thread(target=self.account_creator).start()
+                    Thread(target=self.account_creator, daemon=True).start()
 
                 if request_will_interrupt:
                     self.page.goto("https://www.perplexity.ai/")
@@ -174,7 +189,10 @@ class Driver:
                 self.page.route("**/*", self.intercept_request)
 
                 for page in self.background_pages:
-                    page.close()
+                    try:
+                        page.close()
+                    except Exception:
+                        pass
 
                 while not self.new_account_link:
                     self.page.wait_for_timeout(1000)
@@ -188,7 +206,13 @@ class Driver:
 
         elif "/rest/rate-limit" in request.url:
             route.continue_()
-            gpt4_limit = request.response().json()["remaining"]
+            resp = request.response()
+            gpt4_limit = None
+            if resp:
+                try:
+                    gpt4_limit = resp.json().get("remaining", -1)
+                except Exception:
+                    gpt4_limit = None
 
             if not self.creating_new_account and gpt4_limit == 0:
                 self.creating_new_account = True
