@@ -30,10 +30,16 @@ uv sync
 
 ### As a CLI Tool (MCP Server)
 
-Installs the `perplexity-mcp` command globally without a local virtual environment:
+Installs the `perplexity-mcp` command globally without a local virtual environment. The MCP server is an optional extra, so include `[mcp]` when installing as a tool:
 
 ```bash
-uv tool install .
+uv tool install '.[mcp]'
+```
+
+### With MCP Server
+
+```bash
+uv sync --extra mcp
 ```
 
 ### With Driver Support (Web Interface)
@@ -41,12 +47,6 @@ uv tool install .
 ```bash
 uv sync --extra driver
 uv run patchright install chromium
-```
-
-### With MCP Server
-
-```bash
-uv sync --extra mcp
 ```
 
 ### Development Installation
@@ -68,7 +68,7 @@ This project includes an MCP (Model Context Protocol) server that exposes Perple
 ```bash
 uv sync --extra mcp
 # or, to use as a standalone tool:
-uv tool install .
+uv tool install '.[mcp]'
 ```
 
 ### Running the Server

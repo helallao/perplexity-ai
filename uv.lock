@@ -1092,7 +1092,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
     { name = "websocket-client", specifier = ">=1.9.0" },
 ]
-provides-extras = ["driver", "async", "mcp", "dev", "all"]
+provides-extras = ["driver", "mcp", "dev", "all"]
 
 [[package]]
 name = "platformdirs"
