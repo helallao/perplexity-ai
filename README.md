@@ -1,7 +1,7 @@
 # Perplexity AI
 
 ![Tests](https://github.com/helallao/perplexity-ai/workflows/Tests/badge.svg)
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Perplexity AI is a Python module that leverages [Emailnator](https://emailnator.com/) to generate new accounts for unlimited pro queries. It supports both synchronous and asynchronous APIs, as well as a web interface for users who prefer a GUI-based approach.
@@ -25,29 +25,39 @@ Perplexity AI is a Python module that leverages [Emailnator](https://emailnator.
 ### Basic Installation
 
 ```bash
-pip install -e .
+uv sync
 ```
 
-### With Driver Support (Web Interface)
+### As a CLI Tool (MCP Server)
+
+Installs the `perplexity-mcp` command globally without a local virtual environment. The MCP server is an optional extra, so include `[mcp]` when installing as a tool:
 
 ```bash
-pip install -e ".[driver]"
-patchright install chromium
+uv tool install '.[mcp]'
 ```
 
 ### With MCP Server
 
 ```bash
-pip install -e ".[mcp]"
+uv sync --extra mcp
+```
+
+### With Driver Support (Web Interface)
+
+```bash
+uv sync --extra driver
+uv run patchright install chromium
 ```
 
 ### Development Installation
 
 ```bash
-pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
 This includes testing tools (pytest, pytest-cov, pytest-asyncio), linting (flake8, black, isort, mypy), and all optional dependencies.
+
+> These instructions use [uv](https://docs.astral.sh/uv). If you prefer `pip`, replace `uv sync` with `pip install -e .` and `uv run <tool>` with the tool command directly.
 
 ## MCP Server
 
@@ -56,7 +66,9 @@ This project includes an MCP (Model Context Protocol) server that exposes Perple
 ### Installation
 
 ```bash
-pip install -e ".[mcp]"
+uv sync --extra mcp
+# or, to use as a standalone tool:
+uv tool install '.[mcp]'
 ```
 
 ### Running the Server
@@ -487,20 +499,20 @@ from perplexity.exceptions import (
 ### Run All Tests
 
 ```bash
-pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
 ### With Coverage
 
 ```bash
-pytest tests/ --cov=perplexity --cov=perplexity_async --cov-report=html
+uv run pytest tests/ --cov=perplexity --cov=perplexity_async --cov-report=html
 ```
 
 ### Run Specific Tests
 
 ```bash
-pytest tests/test_utils.py -v
-pytest tests/test_config.py -v
+uv run pytest tests/test_utils.py -v
+uv run pytest tests/test_config.py -v
 ```
 
 ## Development
@@ -513,19 +525,19 @@ git clone https://github.com/yourusername/perplexity-ai.git
 cd perplexity-ai
 
 # Install in development mode
-pip install -e ".[dev]"
+uv sync --extra dev
 
 # Run tests
-pytest
+uv run pytest
 
 # Format code
-black perplexity perplexity_async
+uv run black perplexity perplexity_async
 
 # Check types
-mypy perplexity perplexity_async
+uv run mypy perplexity perplexity_async
 
 # Lint
-flake8 perplexity perplexity_async
+uv run flake8 perplexity perplexity_async
 ```
 
 ### Contributing
