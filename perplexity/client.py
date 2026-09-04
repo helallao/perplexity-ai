@@ -43,14 +43,24 @@ class Client:
     A client for interacting with the Perplexity AI API.
     """
 
-    def __init__(self, cookies: Optional[Dict[str, str]] = None):
+    def __init__(
+        self,
+        cookies: Optional[Dict[str, str]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        proxy: Optional[str] = None,
+    ):
         if cookies is None:
             cookies = {}
-        # Initialize an HTTP session with default headers and optional cookies
+        session_headers = DEFAULT_HEADERS.copy()
+        if headers:
+            session_headers.update({name.lower(): value for name, value in headers.items()})
+
+        # Initialize an HTTP session with default headers and optional transport settings
         self.session = requests.Session(
-            headers=DEFAULT_HEADERS.copy(),
+            headers=session_headers,
             cookies=cookies,
             impersonate="chrome",
+            proxies={"http": proxy, "https": proxy} if proxy else None,
         )
 
         # Flags and counters for account and query management
@@ -118,7 +128,9 @@ class Client:
                     if new_msgs:
                         break
                 else:
-                    logger.warning(f"Perplexity account creation attempt failed: {resp.status_code}")
+                    logger.warning(
+                        f"Perplexity account creation attempt failed: {resp.status_code}"
+                    )
 
             except Exception as e:
                 logger.debug(f"Account creation attempt {attempts} error: {e}")
@@ -141,7 +153,9 @@ class Client:
         # Complete the account creation process
         resp = self.session.get(new_account_link)
         if not resp.ok:
-            raise AccountCreationError(f"Failed to authenticate with callback link: {resp.status_code}")
+            raise AccountCreationError(
+                f"Failed to authenticate with callback link: {resp.status_code}"
+            )
 
         # Update query and file upload limits
         self.copilot = 5
@@ -196,7 +210,9 @@ class Client:
 
         # Update query and file upload counters
         if mode in ["pro", "reasoning", "deep research"]:
-            self.copilot = max(0, self.copilot - 1) if self.copilot != float("inf") else self.copilot
+            self.copilot = (
+                max(0, self.copilot - 1) if self.copilot != float("inf") else self.copilot
+            )
         if files:
             self.file_upload = (
                 max(0, self.file_upload - len(files))
@@ -269,7 +285,9 @@ class Client:
                 "is_incognito": incognito,
                 "language": language,
                 "last_backend_uuid": (
-                    follow_up.get("backend_uuid") if follow_up and isinstance(follow_up, dict) else None
+                    follow_up.get("backend_uuid")
+                    if follow_up and isinstance(follow_up, dict)
+                    else None
                 ),
                 "mode": "concise" if mode == "auto" else "copilot",
                 "model_preference": model_pref,
@@ -283,7 +301,9 @@ class Client:
         # Use SSE_ASK_HEADERS so the POST looks like a browser fetch() call
         # (cors mode, empty dest, content-type: application/json) rather than a
         # page navigation, which is what Perplexity's anti-bot layer checks.
-        resp = self.session.post(ENDPOINT_SSE_ASK, json=json_data, stream=True, headers=SSE_ASK_HEADERS)
+        resp = self.session.post(
+            ENDPOINT_SSE_ASK, json=json_data, stream=True, headers=SSE_ASK_HEADERS
+        )
 
         if resp.status_code == 429:
             raise RateLimitError("Perplexity rate limit reached. Please wait before retrying.")

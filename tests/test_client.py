@@ -1,12 +1,12 @@
 """Tests for Client and AsyncClient classes."""
 
 import json
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
 
 from perplexity.client import Client
-from perplexity.config import SSE_ASK_HEADERS
+from perplexity.config import DEFAULT_HEADERS, SSE_ASK_HEADERS
 from perplexity.exceptions import (
     AuthenticationError,
     FileUploadError,
@@ -29,6 +29,46 @@ def test_client_init_defaults() -> None:
         assert cli_auth.own
         assert cli_auth.copilot == float("inf")
         assert cli_auth.file_upload == float("inf")
+
+
+def test_client_init_custom_headers_and_proxy() -> None:
+    with patch("perplexity.client.requests.Session") as mock_session_cls:
+        mock_session_cls.return_value.get.return_value = MagicMock(ok=True)
+
+        Client(
+            headers={"X-Corporate-Auth": "test-token", "User-Agent": "custom-agent"},
+            proxy="http://127.0.0.1:8080",
+        )
+
+        kwargs = mock_session_cls.call_args.kwargs
+        assert kwargs["headers"]["accept"] == DEFAULT_HEADERS["accept"]
+        assert kwargs["headers"]["x-corporate-auth"] == "test-token"
+        assert kwargs["headers"]["user-agent"] == "custom-agent"
+        assert kwargs["proxies"] == {
+            "http": "http://127.0.0.1:8080",
+            "https": "http://127.0.0.1:8080",
+        }
+
+
+@pytest.mark.asyncio
+async def test_async_client_init_custom_headers_and_proxy() -> None:
+    with patch("perplexity_async.client.requests.AsyncSession") as mock_session_cls:
+        session = MagicMock()
+        session.get = AsyncMock(return_value=MagicMock(ok=True))
+        mock_session_cls.return_value = session
+
+        await AsyncClient(
+            headers={"X-Corporate-Auth": "test-token"},
+            proxy="socks5://127.0.0.1:1080",
+        )
+
+        kwargs = mock_session_cls.call_args.kwargs
+        assert kwargs["headers"]["accept"] == DEFAULT_HEADERS["accept"]
+        assert kwargs["headers"]["x-corporate-auth"] == "test-token"
+        assert kwargs["proxies"] == {
+            "http": "socks5://127.0.0.1:1080",
+            "https": "socks5://127.0.0.1:1080",
+        }
 
 
 def test_client_search_validation() -> None:

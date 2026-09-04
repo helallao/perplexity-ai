@@ -207,6 +207,28 @@ response = client.search(
 )
 ```
 
+### Custom Headers and Proxy
+
+Pass additional session headers or route all client traffic through an HTTP or SOCKS proxy.
+Custom headers are merged with the browser-like defaults, and matching keys override them:
+
+```python
+client = perplexity.Client(
+    cookies,
+    headers={"X-Corporate-Auth": "token"},
+    proxy="http://127.0.0.1:8080",
+)
+```
+
+The asynchronous client accepts the same options:
+
+```python
+client = await perplexity_async.Client(
+    headers={"X-Corporate-Auth": "token"},
+    proxy="socks5://127.0.0.1:1080",
+)
+```
+
 ### Streaming Responses
 
 ```python
