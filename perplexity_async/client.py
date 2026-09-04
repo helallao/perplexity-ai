@@ -72,9 +72,11 @@ class Client(AsyncMixin):
     ):
         if cookies is None:
             cookies = {}
+        custom_headers = {name.lower(): value for name, value in (headers or {}).items()}
         session_headers = DEFAULT_HEADERS.copy()
-        if headers:
-            session_headers.update({name.lower(): value for name, value in headers.items()})
+        session_headers.update(custom_headers)
+        self._sse_headers = SSE_ASK_HEADERS.copy()
+        self._sse_headers.update(custom_headers)
 
         self.session = requests.AsyncSession(
             headers=session_headers,
@@ -300,7 +302,7 @@ class Client(AsyncMixin):
         # (cors mode, empty dest, content-type: application/json) rather than a
         # page navigation, which is what Perplexity's anti-bot layer checks.
         resp = await self.session.post(
-            ENDPOINT_SSE_ASK, json=json_data, stream=True, headers=SSE_ASK_HEADERS
+            ENDPOINT_SSE_ASK, json=json_data, stream=True, headers=self._sse_headers
         )
 
         if resp.status_code == 429:

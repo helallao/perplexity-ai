@@ -167,12 +167,18 @@ def test_client_search_uses_sse_headers() -> None:
         ]
         mock_post.return_value = mock_resp
 
-        cli = Client()
+        cli = Client(
+            headers={"X-Corporate-Auth": "test-token", "User-Agent": "custom-agent"}
+        )
         cli.search("hello")
 
         # The last POST call (to ENDPOINT_SSE_ASK) must carry SSE_ASK_HEADERS.
         sse_call_kwargs = mock_post.call_args_list[-1][1]
-        assert sse_call_kwargs.get("headers") == SSE_ASK_HEADERS, (
+        expected_headers = SSE_ASK_HEADERS.copy()
+        expected_headers.update(
+            {"x-corporate-auth": "test-token", "user-agent": "custom-agent"}
+        )
+        assert sse_call_kwargs.get("headers") == expected_headers, (
             "search() did not pass SSE_ASK_HEADERS to the perplexity_ask POST; "
             "stale sec-fetch-mode/dest values will be rejected by Perplexity's anti-bot layer"
         )
