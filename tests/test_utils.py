@@ -59,6 +59,18 @@ def test_validate_search_params_invalid_model() -> None:
         validate_search_params("pro", "non_existent_model", ["web"], own_account=True)
 
 
+def test_validate_search_params_enterprise_pro_models() -> None:
+    print("console.log -> testing enterprise pro account models (issue #68)")
+    # gpt5 must be valid for pro mode so enterprise users can use GPT-5
+    validate_search_params("pro", "gpt5", ["web"], own_account=True)
+
+    # o3 must be valid for reasoning mode
+    validate_search_params("reasoning", "o3", ["web"], own_account=True)
+
+    # sonar must be valid for pro mode (second error from issue #68)
+    validate_search_params("pro", "sonar", ["web"], own_account=True)
+
+
 def test_validate_query_limits() -> None:
     print("console.log -> testing query and file limit validation")
     validate_query_limits(copilot_remaining=5, file_upload_remaining=10, mode="pro", files_count=2)

@@ -18,3 +18,19 @@ def test_search_modes_and_models() -> None:
     assert None in pro_models
     assert "sonar" in pro_models
     assert "deep research" in config.MODEL_MAPPINGS
+
+
+def test_enterprise_pro_models_available() -> None:
+    print("console.log -> checking enterprise/pro account model availability")
+    pro_models = config.MODEL_MAPPINGS["pro"]
+    # Enterprise pro accounts should be able to use gpt5 (non-reasoning GPT-5)
+    assert "gpt5" in pro_models, "'gpt5' must be a valid model for pro mode (issue #68)"
+
+    reasoning_models = config.MODEL_MAPPINGS["reasoning"]
+    # o3 is a valid reasoning model separate from o3-mini
+    assert "o3" in reasoning_models, "'o3' must be a valid model for reasoning mode"
+    assert "o3-mini" in reasoning_models
+
+    # grok-4.1 uses a dot, not a hyphen (README fix)
+    assert "grok-4.1" in pro_models
+    assert "grok-4-1" not in pro_models

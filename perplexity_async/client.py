@@ -24,7 +24,6 @@ from perplexity.exceptions import (
     FileUploadError,
     NetworkError,
     RateLimitError,
-    ValidationError,
 )
 from perplexity.logger import get_logger
 from perplexity.utils import (

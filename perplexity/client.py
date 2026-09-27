@@ -25,7 +25,6 @@ from .exceptions import (
     FileUploadError,
     NetworkError,
     RateLimitError,
-    ValidationError,
 )
 from .logger import get_logger
 from .utils import (

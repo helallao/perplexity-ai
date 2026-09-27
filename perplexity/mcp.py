@@ -180,7 +180,8 @@ def main():
         logger.warning(
             "No PERPLEXITY_COOKIES set — running anonymously. "
             "Only perplexity_ask is available. "
-            "Set PERPLEXITY_COOKIES to enable perplexity_search, perplexity_reason, and perplexity_research."
+            "Set PERPLEXITY_COOKIES to enable perplexity_search, "
+            "perplexity_reason, and perplexity_research."
         )
 
     transport = os.environ.get("MCP_TRANSPORT", "stdio")
