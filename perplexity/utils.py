@@ -272,9 +272,9 @@ def parse_nested_json_response(content_json: dict) -> dict:
     """
     Parse nested JSON response from Perplexity API.
 
-    Handles two response formats:
-    1. Legacy 'text' format: text (JSON string) -> list of steps -> FINAL step -> answer
-    2. Current 'blocks' format: blocks[].markdown_block.answer
+    Extracts answer and chunks from either:
+    1. Modern structure: 'blocks' list -> block with intended_usage=='ask_text' -> markdown_block
+    2. Legacy structure: 'text' (JSON string) -> list of steps -> FINAL step -> answer
 
     Args:
         content_json: Response JSON from API
@@ -291,6 +291,7 @@ def parse_nested_json_response(content_json: dict) -> dict:
     if not isinstance(content_json, dict):
         return content_json
 
+    # 1. Normalize legacy 'text' if present (string -> JSON list)
     if "text" in content_json and content_json["text"]:
         try:
             raw_text = content_json["text"]
@@ -321,13 +322,26 @@ def parse_nested_json_response(content_json: dict) -> dict:
         except (json.JSONDecodeError, TypeError, KeyError):
             pass
 
-    if not content_json.get("answer") and "blocks" in content_json:
+    # 2. Modern API response format: 'blocks'
+    if "blocks" in content_json and isinstance(content_json["blocks"], list):
         for block in content_json["blocks"]:
-            if not isinstance(block, dict):
-                continue
-            markdown_block = block.get("markdown_block", {})
-            if isinstance(markdown_block, dict) and markdown_block.get("answer"):
-                content_json["answer"] = markdown_block["answer"]
-                break
+            if isinstance(block, dict):
+                usage = block.get("intended_usage")
+                md_block = block.get("markdown_block")
+                if usage == "ask_text" and isinstance(md_block, dict):
+                    if "answer" in md_block:
+                        content_json["answer"] = md_block.get("answer", "")
+                        content_json["chunks"] = md_block.get("chunks", [])
+                        return content_json
+
+        # Fallback: any block containing a markdown_block with an answer
+        if "answer" not in content_json:
+            for block in content_json["blocks"]:
+                if isinstance(block, dict):
+                    md_block = block.get("markdown_block")
+                    if isinstance(md_block, dict) and "answer" in md_block:
+                        content_json["answer"] = md_block.get("answer", "")
+                        content_json["chunks"] = md_block.get("chunks", [])
+                        return content_json
 
     return content_json

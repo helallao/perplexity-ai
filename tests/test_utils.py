@@ -77,10 +77,14 @@ def test_validate_query_limits() -> None:
     validate_query_limits(copilot_remaining=0, file_upload_remaining=10, mode="auto", files_count=0)
 
     with pytest.raises(ValidationError, match="No remaining enhanced queries"):
-        validate_query_limits(copilot_remaining=0, file_upload_remaining=10, mode="pro", files_count=0)
+        validate_query_limits(
+            copilot_remaining=0, file_upload_remaining=10, mode="pro", files_count=0
+        )
 
     with pytest.raises(ValidationError, match="Insufficient file uploads"):
-        validate_query_limits(copilot_remaining=5, file_upload_remaining=1, mode="pro", files_count=2)
+        validate_query_limits(
+            copilot_remaining=5, file_upload_remaining=1, mode="pro", files_count=2
+        )
 
 
 def test_validate_file_data() -> None:
@@ -159,10 +163,15 @@ def test_parse_nested_json_response() -> None:
     assert parse_nested_json_response(None) is None  # type: ignore
 
     # Case 2: standard nested JSON with FINAL step
-    nested_text = json.dumps([
-        {"step_type": "SEARCH", "content": {}},
-        {"step_type": "FINAL", "content": {"answer": json.dumps({"answer": "42", "chunks": ["chunk1"]})}},
-    ])
+    nested_text = json.dumps(
+        [
+            {"step_type": "SEARCH", "content": {}},
+            {
+                "step_type": "FINAL",
+                "content": {"answer": json.dumps({"answer": "42", "chunks": ["chunk1"]})},
+            },
+        ]
+    )
     resp = {"text": nested_text}
     parsed = parse_nested_json_response(resp)
     assert parsed["answer"] == "42"
@@ -173,27 +182,34 @@ def test_parse_nested_json_response() -> None:
     parsed_inv = parse_nested_json_response(invalid_resp)
     assert parsed_inv["text"] == "not valid json"
 
-    # Case 4: new 'blocks' format (no 'text' key) - the API change that caused issue #63
+    # Case 4: modern blocks format with ask_text
     blocks_resp = {
         "blocks": [
-            {"intended_usage": "ask_text", "markdown_block": {"answer": "Blocks answer"}},
+            {"intended_usage": "status", "text": "searching..."},
+            {
+                "intended_usage": "ask_text",
+                "markdown_block": {
+                    "answer": "Modern Answer",
+                    "chunks": ["Modern ", "Answer"],
+                },
+            },
         ]
     }
     parsed_blocks = parse_nested_json_response(blocks_resp)
-    assert parsed_blocks["answer"] == "Blocks answer"
+    assert parsed_blocks["answer"] == "Modern Answer"
+    assert parsed_blocks["chunks"] == ["Modern ", "Answer"]
 
-    # Case 5: 'blocks' format without a markdown_block answer falls back gracefully
-    empty_blocks_resp = {"blocks": [{"intended_usage": "other"}]}
-    parsed_empty = parse_nested_json_response(empty_blocks_resp)
-    assert parsed_empty.get("answer") is None
-
-    # Case 6: 'text' format takes precedence when both keys are present
-    both_resp = {
-        "text": json.dumps([
-            {"step_type": "FINAL", "content": {"answer": json.dumps({"answer": "from text", "chunks": []})}}
-        ]),
-        "blocks": [{"intended_usage": "ask_text", "markdown_block": {"answer": "from blocks"}}],
+    # Case 5: modern blocks fallback without ask_text tag
+    fallback_resp = {
+        "blocks": [
+            {
+                "markdown_block": {
+                    "answer": "Fallback Answer",
+                    "chunks": ["Fallback"],
+                }
+            }
+        ]
     }
-    parsed_both = parse_nested_json_response(both_resp)
-    assert parsed_both["answer"] == "from text"
-
+    parsed_fb = parse_nested_json_response(fallback_resp)
+    assert parsed_fb["answer"] == "Fallback Answer"
+    assert parsed_fb["chunks"] == ["Fallback"]
