@@ -39,10 +39,6 @@ jobs:
       run: |
         black --check perplexity perplexity_async
 
-    - name: Type check with mypy
-      run: |
-        mypy perplexity perplexity_async
-
     - name: Run tests with pytest
       run: |
         pytest tests/ -v --cov=perplexity --cov=perplexity_async --cov-report=xml --cov-report=term

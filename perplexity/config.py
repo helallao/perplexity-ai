@@ -7,7 +7,7 @@ Modify these values to customize behavior without changing core code.
 
 import os
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 # API Configuration
 API_BASE_URL = "https://www.perplexity.ai"
@@ -37,7 +37,7 @@ SEARCH_SOURCES = ["web", "scholar", "social"]
 SEARCH_LANGUAGES = ["en-US", "en-GB", "pt-BR", "es-ES", "fr-FR", "de-DE"]
 
 # Model Mappings
-MODEL_MAPPINGS: Dict[str, Dict[str, str]] = {
+MODEL_MAPPINGS: Dict[str, Dict[Optional[str], str]] = {
     "auto": {None: "turbo"},
     "pro": {
         None: "pplx_pro",

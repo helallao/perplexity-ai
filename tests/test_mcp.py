@@ -1,5 +1,9 @@
 """Tests for Perplexity MCP tools and extraction helpers."""
 
+import pytest
+
+pytest.importorskip("mcp")
+
 from unittest.mock import MagicMock, patch
 
 from perplexity.mcp import (
