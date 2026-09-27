@@ -10,10 +10,14 @@ try:
     from mcp.server.mcpserver import MCPServer as _Server
 
     _HTTP_BIND_ON_RUN = True
-except ImportError:  # mcp 1.x
-    from mcp.server.fastmcp import FastMCP as _Server
+except ImportError:
+    try:  # mcp 1.x
+        from mcp.server.fastmcp import FastMCP as _Server
 
-    _HTTP_BIND_ON_RUN = False
+        _HTTP_BIND_ON_RUN = False
+    except ImportError:  # mcp not installed at all
+        _Server = None  # type: ignore[assignment,misc]
+        _HTTP_BIND_ON_RUN = False
 
 from perplexity import Client
 from perplexity.logger import setup_logger
@@ -23,7 +27,9 @@ logger = setup_logger("mcp")
 HOST = os.environ.get("MCP_HOST", "127.0.0.1")
 PORT = int(os.environ.get("MCP_PORT", "8000"))
 
-if _HTTP_BIND_ON_RUN:
+if _Server is None:
+    mcp = None
+elif _HTTP_BIND_ON_RUN:
     mcp = _Server("perplexity")
 else:
     mcp = _Server("perplexity", host=HOST, port=PORT)
@@ -54,8 +60,8 @@ def _extract_answer(resp: Any) -> str:
         if isinstance(block, dict) and block.get("intended_usage") == "ask_text":
             markdown_block = block.get("markdown_block", {})
             if isinstance(markdown_block, dict):
-                return markdown_block.get("answer", "")
-    return resp.get("answer", "")
+                return str(markdown_block.get("answer", ""))
+    return str(resp.get("answer", ""))
 
 
 def perplexity_ask(query: str) -> str:
@@ -146,6 +152,12 @@ def perplexity_search(query: str) -> str:
 def main():
     global client
 
+    if mcp is None:
+        sys.exit(
+            "ERROR: the 'mcp' package is required to run the MCP server. "
+            "Install it with: pip install 'perplexity-api[mcp]'"
+        )
+
     cookies_env = os.environ.get("PERPLEXITY_COOKIES")
     if cookies_env:
         try:
@@ -168,7 +180,8 @@ def main():
         logger.warning(
             "No PERPLEXITY_COOKIES set — running anonymously. "
             "Only perplexity_ask is available. "
-            "Set PERPLEXITY_COOKIES to enable perplexity_search, perplexity_reason, and perplexity_research."
+            "Set PERPLEXITY_COOKIES to enable perplexity_search, "
+            "perplexity_reason, and perplexity_research."
         )
 
     transport = os.environ.get("MCP_TRANSPORT", "stdio")

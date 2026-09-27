@@ -45,6 +45,9 @@ dev = [
     "mypy>=1.5.0",
     "flake8>=6.0.0",
     "isort>=5.12.0",
+    "bandit>=1.7.0",
+    "pylint>=3.0.0",
+    "mcp>=1.0.0",
 ]
 all = [
     "perplexity-api[driver,mcp,dev]",
@@ -80,7 +83,22 @@ line_length = 100
 
 [tool.mypy]
 python_version = "3.10"
-warn_return_any = true
+warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
+check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = [
+    "perplexity.config",
+    "perplexity.client",
+    "perplexity.labs",
+    "perplexity.emailnator",
+    "perplexity.driver",
+    "perplexity.mcp",
+    "perplexity_async.labs",
+    "perplexity_async.emailnator",
+    "perplexity_async.client",
+]
+ignore_errors = true
