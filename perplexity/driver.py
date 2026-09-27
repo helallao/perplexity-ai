@@ -1,7 +1,7 @@
 import re
 import time
 from threading import Thread
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import unquote
 
 from curl_cffi import requests

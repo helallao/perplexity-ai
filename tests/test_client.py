@@ -122,8 +122,12 @@ def test_client_handles_combined_end_of_stream_frame() -> None:
         result = cli.search("test")
         streamed = list(cli.search("test", stream=True))
 
-        assert result == expected
-        assert streamed == [expected]
+        # parse_nested_json_response enriches blocks-format responses with a
+        # top-level "answer" key so callers can use response["answer"] directly.
+        assert result["blocks"] == expected["blocks"]
+        assert result["answer"] == "OK"
+        assert streamed[0]["blocks"] == expected["blocks"]
+        assert streamed[0]["answer"] == "OK"
 
 
 @pytest.mark.asyncio
@@ -138,11 +142,13 @@ async def test_async_client_handles_combined_end_of_stream_frame() -> None:
 
         cli = await AsyncClient()
         result = await cli.search("test")
-        assert result == expected
+        assert result["blocks"] == expected["blocks"]
+        assert result["answer"] == "OK"
 
         stream = await cli.search("test", stream=True)
         streamed = [chunk async for chunk in stream]
-        assert streamed == [expected]
+        assert streamed[0]["blocks"] == expected["blocks"]
+        assert streamed[0]["answer"] == "OK"
 
 
 def test_client_search_http_errors() -> None:

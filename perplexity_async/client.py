@@ -33,6 +33,7 @@ from perplexity.utils import (
     validate_query_limits,
     validate_search_params,
 )
+
 from .emailnator import Emailnator
 
 logger = get_logger("async_client")
@@ -146,7 +147,9 @@ class Client(AsyncMixin):
 
         resp = await self.session.get(new_account_link)
         if not resp.ok:
-            raise AccountCreationError(f"Failed to authenticate with callback link: {resp.status_code}")
+            raise AccountCreationError(
+                f"Failed to authenticate with callback link: {resp.status_code}"
+            )
 
         self.copilot = 5
         self.file_upload = 10
@@ -199,7 +202,9 @@ class Client(AsyncMixin):
         )
 
         if mode in ["pro", "reasoning", "deep research"]:
-            self.copilot = max(0, self.copilot - 1) if self.copilot != float("inf") else self.copilot
+            self.copilot = (
+                max(0, self.copilot - 1) if self.copilot != float("inf") else self.copilot
+            )
         if files:
             self.file_upload = (
                 max(0, self.file_upload - len(files))
@@ -269,7 +274,9 @@ class Client(AsyncMixin):
                 "is_incognito": incognito,
                 "language": language,
                 "last_backend_uuid": (
-                    follow_up.get("backend_uuid") if follow_up and isinstance(follow_up, dict) else None
+                    follow_up.get("backend_uuid")
+                    if follow_up and isinstance(follow_up, dict)
+                    else None
                 ),
                 "mode": "concise" if mode == "auto" else "copilot",
                 "model_preference": model_pref,
@@ -282,7 +289,9 @@ class Client(AsyncMixin):
         # Use SSE_ASK_HEADERS so the POST looks like a browser fetch() call
         # (cors mode, empty dest, content-type: application/json) rather than a
         # page navigation, which is what Perplexity's anti-bot layer checks.
-        resp = await self.session.post(ENDPOINT_SSE_ASK, json=json_data, stream=True, headers=SSE_ASK_HEADERS)
+        resp = await self.session.post(
+            ENDPOINT_SSE_ASK, json=json_data, stream=True, headers=SSE_ASK_HEADERS
+        )
 
         if resp.status_code == 429:
             raise RateLimitError("Perplexity rate limit reached. Please wait before retrying.")

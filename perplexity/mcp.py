@@ -54,8 +54,8 @@ def _extract_answer(resp: Any) -> str:
         if isinstance(block, dict) and block.get("intended_usage") == "ask_text":
             markdown_block = block.get("markdown_block", {})
             if isinstance(markdown_block, dict):
-                return markdown_block.get("answer", "")
-    return resp.get("answer", "")
+                return str(markdown_block.get("answer", ""))
+    return str(resp.get("answer", ""))
 
 
 def perplexity_ask(query: str) -> str:

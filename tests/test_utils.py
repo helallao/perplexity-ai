@@ -161,3 +161,27 @@ def test_parse_nested_json_response() -> None:
     parsed_inv = parse_nested_json_response(invalid_resp)
     assert parsed_inv["text"] == "not valid json"
 
+    # Case 4: new 'blocks' format (no 'text' key) - the API change that caused issue #63
+    blocks_resp = {
+        "blocks": [
+            {"intended_usage": "ask_text", "markdown_block": {"answer": "Blocks answer"}},
+        ]
+    }
+    parsed_blocks = parse_nested_json_response(blocks_resp)
+    assert parsed_blocks["answer"] == "Blocks answer"
+
+    # Case 5: 'blocks' format without a markdown_block answer falls back gracefully
+    empty_blocks_resp = {"blocks": [{"intended_usage": "other"}]}
+    parsed_empty = parse_nested_json_response(empty_blocks_resp)
+    assert parsed_empty.get("answer") is None
+
+    # Case 6: 'text' format takes precedence when both keys are present
+    both_resp = {
+        "text": json.dumps([
+            {"step_type": "FINAL", "content": {"answer": json.dumps({"answer": "from text", "chunks": []})}}
+        ]),
+        "blocks": [{"intended_usage": "ask_text", "markdown_block": {"answer": "from blocks"}}],
+    }
+    parsed_both = parse_nested_json_response(both_resp)
+    assert parsed_both["answer"] == "from text"
+
