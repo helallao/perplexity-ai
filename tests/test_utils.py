@@ -59,16 +59,32 @@ def test_validate_search_params_invalid_model() -> None:
         validate_search_params("pro", "non_existent_model", ["web"], own_account=True)
 
 
+def test_validate_search_params_enterprise_pro_models() -> None:
+    print("console.log -> testing enterprise pro account models (issue #68)")
+    # gpt5 must be valid for pro mode so enterprise users can use GPT-5
+    validate_search_params("pro", "gpt5", ["web"], own_account=True)
+
+    # o3 must be valid for reasoning mode
+    validate_search_params("reasoning", "o3", ["web"], own_account=True)
+
+    # sonar must be valid for pro mode (second error from issue #68)
+    validate_search_params("pro", "sonar", ["web"], own_account=True)
+
+
 def test_validate_query_limits() -> None:
     print("console.log -> testing query and file limit validation")
     validate_query_limits(copilot_remaining=5, file_upload_remaining=10, mode="pro", files_count=2)
     validate_query_limits(copilot_remaining=0, file_upload_remaining=10, mode="auto", files_count=0)
 
     with pytest.raises(ValidationError, match="No remaining enhanced queries"):
-        validate_query_limits(copilot_remaining=0, file_upload_remaining=10, mode="pro", files_count=0)
+        validate_query_limits(
+            copilot_remaining=0, file_upload_remaining=10, mode="pro", files_count=0
+        )
 
     with pytest.raises(ValidationError, match="Insufficient file uploads"):
-        validate_query_limits(copilot_remaining=5, file_upload_remaining=1, mode="pro", files_count=2)
+        validate_query_limits(
+            copilot_remaining=5, file_upload_remaining=1, mode="pro", files_count=2
+        )
 
 
 def test_validate_file_data() -> None:
@@ -147,10 +163,15 @@ def test_parse_nested_json_response() -> None:
     assert parse_nested_json_response(None) is None  # type: ignore
 
     # Case 2: standard nested JSON with FINAL step
-    nested_text = json.dumps([
-        {"step_type": "SEARCH", "content": {}},
-        {"step_type": "FINAL", "content": {"answer": json.dumps({"answer": "42", "chunks": ["chunk1"]})}},
-    ])
+    nested_text = json.dumps(
+        [
+            {"step_type": "SEARCH", "content": {}},
+            {
+                "step_type": "FINAL",
+                "content": {"answer": json.dumps({"answer": "42", "chunks": ["chunk1"]})},
+            },
+        ]
+    )
     resp = {"text": nested_text}
     parsed = parse_nested_json_response(resp)
     assert parsed["answer"] == "42"
@@ -161,3 +182,34 @@ def test_parse_nested_json_response() -> None:
     parsed_inv = parse_nested_json_response(invalid_resp)
     assert parsed_inv["text"] == "not valid json"
 
+    # Case 4: modern blocks format with ask_text
+    blocks_resp = {
+        "blocks": [
+            {"intended_usage": "status", "text": "searching..."},
+            {
+                "intended_usage": "ask_text",
+                "markdown_block": {
+                    "answer": "Modern Answer",
+                    "chunks": ["Modern ", "Answer"],
+                },
+            },
+        ]
+    }
+    parsed_blocks = parse_nested_json_response(blocks_resp)
+    assert parsed_blocks["answer"] == "Modern Answer"
+    assert parsed_blocks["chunks"] == ["Modern ", "Answer"]
+
+    # Case 5: modern blocks fallback without ask_text tag
+    fallback_resp = {
+        "blocks": [
+            {
+                "markdown_block": {
+                    "answer": "Fallback Answer",
+                    "chunks": ["Fallback"],
+                }
+            }
+        ]
+    }
+    parsed_fb = parse_nested_json_response(fallback_resp)
+    assert parsed_fb["answer"] == "Fallback Answer"
+    assert parsed_fb["chunks"] == ["Fallback"]

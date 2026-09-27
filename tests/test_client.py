@@ -31,7 +31,8 @@ def make_sse_frames(answer: str = "OK") -> tuple[dict, list[bytes]]:
         f"event: message\r\ndata: {json.dumps(message)}".encode("utf-8"),
         b"event: end_of_stream\r\ndata: {}",
     ]
-    return message, frames
+    expected = {**message, "answer": answer, "chunks": []}
+    return expected, frames
 
 
 def make_sync_response(frames: list[bytes]) -> MagicMock:
@@ -81,22 +82,27 @@ def test_client_search_validation() -> None:
 
 
 def test_client_search_success_mock() -> None:
-    with patch("curl_cffi.requests.Session.get") as mock_get, patch(
-        "curl_cffi.requests.Session.post"
-    ) as mock_post:
+    with (
+        patch("curl_cffi.requests.Session.get") as mock_get,
+        patch("curl_cffi.requests.Session.post") as mock_post,
+    ):
         mock_get.return_value = MagicMock(ok=True)
 
         final_data = json.dumps({"answer": "Python is a language", "chunks": []})
-        nested_text = json.dumps([
-            {"step_type": "FINAL", "content": {"answer": final_data}}
-        ])
+        nested_text = json.dumps([{"step_type": "FINAL", "content": {"answer": final_data}}])
         mock_response_data = {
             "text": nested_text,
-            "blocks": [{"intended_usage": "ask_text", "markdown_block": {"answer": "Python is a language"}}]
+            "blocks": [
+                {"intended_usage": "ask_text", "markdown_block": {"answer": "Python is a language"}}
+            ],
         }
 
-        sse_chunk = f"data: {json.dumps(mock_response_data)}\r\n\r\nevent: end_of_stream\r\n\r\n".encode("utf-8")
-        
+        sse_chunk = (
+            f"data: {json.dumps(mock_response_data)}\r\n\r\nevent: end_of_stream\r\n\r\n".encode(
+                "utf-8"
+            )
+        )
+
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.iter_lines.return_value = [
@@ -112,9 +118,10 @@ def test_client_search_success_mock() -> None:
 
 
 def test_client_handles_combined_end_of_stream_frame() -> None:
-    with patch("curl_cffi.requests.Session.get", return_value=MagicMock(ok=True)), patch(
-        "curl_cffi.requests.Session.post"
-    ) as mock_post:
+    with (
+        patch("curl_cffi.requests.Session.get", return_value=MagicMock(ok=True)),
+        patch("curl_cffi.requests.Session.post") as mock_post,
+    ):
         expected, frames = make_sse_frames()
         mock_post.return_value = make_sync_response(frames)
 
@@ -122,8 +129,12 @@ def test_client_handles_combined_end_of_stream_frame() -> None:
         result = cli.search("test")
         streamed = list(cli.search("test", stream=True))
 
-        assert result == expected
-        assert streamed == [expected]
+        # parse_nested_json_response enriches blocks-format responses with a
+        # top-level "answer" key so callers can use response["answer"] directly.
+        assert result["blocks"] == expected["blocks"]
+        assert result["answer"] == "OK"
+        assert streamed[0]["blocks"] == expected["blocks"]
+        assert streamed[0]["answer"] == "OK"
 
 
 @pytest.mark.asyncio
@@ -138,17 +149,20 @@ async def test_async_client_handles_combined_end_of_stream_frame() -> None:
 
         cli = await AsyncClient()
         result = await cli.search("test")
-        assert result == expected
+        assert result["blocks"] == expected["blocks"]
+        assert result["answer"] == "OK"
 
         stream = await cli.search("test", stream=True)
         streamed = [chunk async for chunk in stream]
-        assert streamed == [expected]
+        assert streamed[0]["blocks"] == expected["blocks"]
+        assert streamed[0]["answer"] == "OK"
 
 
 def test_client_search_http_errors() -> None:
-    with patch("curl_cffi.requests.Session.get") as mock_get, patch(
-        "curl_cffi.requests.Session.post"
-    ) as mock_post:
+    with (
+        patch("curl_cffi.requests.Session.get") as mock_get,
+        patch("curl_cffi.requests.Session.post") as mock_post,
+    ):
         mock_get.return_value = MagicMock(ok=True)
 
         cli = Client()
@@ -176,9 +190,10 @@ def test_client_search_uses_sse_headers() -> None:
     """search() must pass SSE_ASK_HEADERS to the perplexity_ask POST so the
     request looks like a browser fetch() call rather than a page navigation,
     which is the primary cause of Perplexity blocking the request (issue #70)."""
-    with patch("curl_cffi.requests.Session.get") as mock_get, patch(
-        "curl_cffi.requests.Session.post"
-    ) as mock_post:
+    with (
+        patch("curl_cffi.requests.Session.get") as mock_get,
+        patch("curl_cffi.requests.Session.post") as mock_post,
+    ):
         mock_get.return_value = MagicMock(ok=True)
 
         final_data = json.dumps({"answer": "test", "chunks": []})

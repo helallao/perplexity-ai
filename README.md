@@ -272,8 +272,8 @@ perplexity_cli = perplexity.Client()
 
 # model = model for mode, which can only be used in own accounts, that is {
 #     'auto': [None],
-#     'pro': [None, 'sonar', 'gpt-5.2', 'claude-4.5-sonnet', 'grok-4-1'],
-#     'reasoning': [None, 'gpt-5.2-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking', 'grok-4.1-reasoning'],
+#     'pro': [None, 'sonar', 'gpt5', 'gpt-5.2', 'claude-4.5-sonnet', 'grok-4.1'],
+#     'reasoning': [None, 'o3', 'o3-mini', 'gpt5', 'gpt-5.2-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking', 'grok-4.1-reasoning'],
 #     'deep research': [None]
 # }
 # sources = ['web', 'scholar', 'social']
@@ -335,8 +335,8 @@ async def test():
     # mode = ['auto', 'pro', 'reasoning', 'deep research']
     # model = model for mode, which can only be used in own accounts, that is {
     #     'auto': [None],
-    #     'pro': [None, 'sonar', 'gpt-5.2', 'claude-4.5-sonnet', 'grok-4-1'],
-    #     'reasoning': [None, 'gpt-5.2-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking', 'grok-4.1-reasoning'],
+    #     'pro': [None, 'sonar', 'gpt5', 'gpt-5.2', 'claude-4.5-sonnet', 'grok-4.1'],
+    #     'reasoning': [None, 'o3', 'o3-mini', 'gpt5', 'gpt-5.2-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking', 'grok-4.1-reasoning'],
     #     'deep research': [None]
     # }
     # sources = ['web', 'scholar', 'social']
@@ -473,8 +473,8 @@ class Client:
 ```python
 {
     'auto': [None],
-    'pro': [None, 'sonar', 'gpt-5.2', 'claude-4.5-sonnet', 'grok-4-1'],
-    'reasoning': [None, 'gpt-5.2-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking', 'grok-4.1-reasoning'],
+    'pro': [None, 'sonar', 'gpt5', 'gpt-5.2', 'claude-4.5-sonnet', 'grok-4.1'],
+    'reasoning': [None, 'o3', 'o3-mini', 'gpt5', 'gpt-5.2-thinking', 'claude-4.5-sonnet-thinking', 'gemini-3.0-pro', 'kimi-k2-thinking', 'grok-4.1-reasoning'],
     'deep research': [None]
 }
 ```

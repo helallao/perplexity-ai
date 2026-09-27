@@ -48,6 +48,7 @@ dev = [
     "isort>=5.12.0",
     "bandit>=1.7.0",
     "pylint>=3.0.0",
+    "mcp>=1.0.0",
 ]
 all = [
     "perplexity-api[driver,mcp,dev]",
@@ -102,4 +103,3 @@ module = [
     "perplexity_async.client",
 ]
 ignore_errors = true
-
