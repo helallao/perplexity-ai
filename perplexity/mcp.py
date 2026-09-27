@@ -10,10 +10,14 @@ try:
     from mcp.server.mcpserver import MCPServer as _Server
 
     _HTTP_BIND_ON_RUN = True
-except ImportError:  # mcp 1.x
-    from mcp.server.fastmcp import FastMCP as _Server
+except ImportError:
+    try:  # mcp 1.x
+        from mcp.server.fastmcp import FastMCP as _Server
 
-    _HTTP_BIND_ON_RUN = False
+        _HTTP_BIND_ON_RUN = False
+    except ImportError:  # mcp not installed at all
+        _Server = None  # type: ignore[assignment,misc]
+        _HTTP_BIND_ON_RUN = False
 
 from perplexity import Client
 from perplexity.logger import setup_logger
@@ -23,7 +27,9 @@ logger = setup_logger("mcp")
 HOST = os.environ.get("MCP_HOST", "127.0.0.1")
 PORT = int(os.environ.get("MCP_PORT", "8000"))
 
-if _HTTP_BIND_ON_RUN:
+if _Server is None:
+    mcp = None
+elif _HTTP_BIND_ON_RUN:
     mcp = _Server("perplexity")
 else:
     mcp = _Server("perplexity", host=HOST, port=PORT)
@@ -145,6 +151,12 @@ def perplexity_search(query: str) -> str:
 
 def main():
     global client
+
+    if mcp is None:
+        sys.exit(
+            "ERROR: the 'mcp' package is required to run the MCP server. "
+            "Install it with: pip install 'perplexity-api[mcp]'"
+        )
 
     cookies_env = os.environ.get("PERPLEXITY_COOKIES")
     if cookies_env:
