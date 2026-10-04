@@ -9,6 +9,7 @@ from perplexity.config import ENDPOINT_AUTH_SESSION, SSE_ASK_HEADERS
 from perplexity.exceptions import (
     AuthenticationError,
     FileUploadError,
+    IncompleteResponseError,
     NetworkError,
     RateLimitError,
     ValidationError,
@@ -154,6 +155,39 @@ async def test_async_client_search_success_blocks_format(mock_session: MagicMock
     assert isinstance(result, dict)
     assert result["answer"] == "Deep learning answer"
     assert result["blocks"] == expected["blocks"]
+
+
+@pytest.mark.asyncio
+async def test_async_client_strict_completion_and_provider_timeout(
+    mock_session: MagicMock,
+) -> None:
+    partial = {"answer": "partial", "response_id": "diagnostic-only"}
+    frames = [f"data: {json.dumps(partial)}".encode("utf-8")]
+    mock_session.post.return_value = make_async_response(frames)
+    observed = []
+    cli = await AsyncClient()
+
+    assert (await cli.search("test"))["answer"] == "partial"
+    with pytest.raises(IncompleteResponseError, match="before terminal"):
+        await cli.search(
+            "test",
+            require_complete=True,
+            provider_timeout=321,
+            event_callback=observed.append,
+        )
+
+    assert observed[-1]["response_id"] == "diagnostic-only"
+    assert mock_session.post.call_args.kwargs["timeout"] == 321
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("provider_timeout", [0, -1, float("nan"), float("inf"), True])
+async def test_async_client_rejects_invalid_provider_timeout(
+    mock_session: MagicMock, provider_timeout
+) -> None:
+    cli = await AsyncClient()
+    with pytest.raises(ValueError, match="finite number greater than zero"):
+        await cli.search("test", provider_timeout=provider_timeout)
 
 
 @pytest.mark.asyncio

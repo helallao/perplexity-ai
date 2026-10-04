@@ -10,6 +10,7 @@ from perplexity.config import SSE_ASK_HEADERS
 from perplexity.exceptions import (
     AuthenticationError,
     FileUploadError,
+    IncompleteResponseError,
     NetworkError,
     RateLimitError,
     ValidationError,
@@ -135,6 +136,40 @@ def test_client_handles_combined_end_of_stream_frame() -> None:
         assert result["answer"] == "OK"
         assert streamed[0]["blocks"] == expected["blocks"]
         assert streamed[0]["answer"] == "OK"
+
+
+def test_client_strict_completion_and_provider_timeout() -> None:
+    with (
+        patch("curl_cffi.requests.Session.get", return_value=MagicMock(ok=True)),
+        patch("curl_cffi.requests.Session.post") as mock_post,
+    ):
+        partial = {"answer": "partial", "backend_uuid": "diagnostic-only"}
+        mock_post.return_value = make_sync_response(
+            [f"data: {json.dumps(partial)}".encode("utf-8")]
+        )
+        observed = []
+        cli = Client()
+
+        # The established default remains permissive on premature EOF.
+        assert cli.search("test")["answer"] == "partial"
+        with pytest.raises(IncompleteResponseError, match="before terminal"):
+            cli.search(
+                "test",
+                require_complete=True,
+                provider_timeout=321,
+                event_callback=observed.append,
+            )
+
+        assert observed[-1]["backend_uuid"] == "diagnostic-only"
+        assert mock_post.call_args.kwargs["timeout"] == 321
+
+
+@pytest.mark.parametrize("provider_timeout", [0, -1, float("nan"), float("inf"), True])
+def test_client_rejects_invalid_provider_timeout(provider_timeout) -> None:
+    with patch("curl_cffi.requests.Session.get", return_value=MagicMock(ok=True)):
+        cli = Client()
+        with pytest.raises(ValueError, match="finite number greater than zero"):
+            cli.search("test", provider_timeout=provider_timeout)
 
 
 @pytest.mark.asyncio

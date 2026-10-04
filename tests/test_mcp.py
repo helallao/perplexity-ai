@@ -37,9 +37,19 @@ def test_extract_answer_various_payloads() -> None:
 
 
 def test_mcp_tools_with_mocked_client() -> None:
-    with patch("perplexity.mcp._get_client") as mock_get_cli:
+    with (
+        patch("perplexity.mcp._get_client") as mock_get_cli,
+        patch("perplexity.mcp._get_research_manager") as mock_get_manager,
+    ):
         mock_cli = MagicMock()
         mock_get_cli.return_value = mock_cli
+        mock_manager = MagicMock()
+        mock_get_manager.return_value = mock_manager
+        mock_manager.start.return_value = {"id": "local-id"}
+        mock_manager.wait.return_value = {
+            "delivery_state": "completed",
+            "result": "Result",
+        }
 
         mock_cli.search.return_value = {
             "blocks": [{"intended_usage": "ask_text", "markdown_block": {"answer": "Result"}}]
@@ -59,3 +69,14 @@ def test_mcp_tool_handles_exceptions_gracefully() -> None:
 
         result = perplexity_ask("test query")
         assert "Error executing query" in result
+
+
+def test_blocking_research_fails_closed_when_journal_initialization_fails() -> None:
+    with (
+        patch("perplexity.mcp._get_research_manager", side_effect=RuntimeError("store failed")),
+        patch("perplexity.mcp._get_client") as mock_get_client,
+    ):
+        result = perplexity_research("do not duplicate")
+
+    assert result == "Error executing research query: Research could not be completed"
+    mock_get_client.assert_not_called()

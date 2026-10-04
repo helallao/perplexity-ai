@@ -1,9 +1,11 @@
+import inspect
 import json
+import math
 import mimetypes
 import random
 import re
 import sys
-from typing import Any, AsyncGenerator, Dict, List, Optional, Union
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Union
 from uuid import uuid4
 
 from curl_cffi import CurlMime, requests
@@ -22,11 +24,13 @@ from perplexity.exceptions import (
     AccountCreationError,
     AuthenticationError,
     FileUploadError,
+    IncompleteResponseError,
     NetworkError,
     RateLimitError,
 )
 from perplexity.logger import get_logger
 from perplexity.utils import (
+    has_usable_final_response,
     parse_nested_json_response,
     validate_file_data,
     validate_query_limits,
@@ -166,6 +170,9 @@ class Client(AsyncMixin):
         language: str = "en-US",
         follow_up: Optional[Dict[str, Any]] = None,
         incognito: bool = False,
+        provider_timeout: Optional[float] = None,
+        require_complete: bool = False,
+        event_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> Union[Dict[str, Any], AsyncGenerator[Dict[str, Any], None]]:
         """
         Query function asynchronously.
@@ -180,6 +187,9 @@ class Client(AsyncMixin):
         - language: Language code (ISO 639).
         - follow_up: Information for follow-up queries.
         - incognito: Whether to enable incognito mode.
+        - provider_timeout: Optional timeout for the provider HTTP/SSE request.
+        - require_complete: Require an explicit terminal SSE marker and usable answer.
+        - event_callback: Optional observer called for each parsed SSE data object.
 
         Returns:
         - Response dict or async generator yielding response dicts if streaming.
@@ -188,6 +198,12 @@ class Client(AsyncMixin):
             sources = ["web"]
         if files is None:
             files = {}
+        if provider_timeout is not None and (
+            isinstance(provider_timeout, bool)
+            or not math.isfinite(provider_timeout)
+            or provider_timeout <= 0
+        ):
+            raise ValueError("provider_timeout must be a finite number greater than zero")
 
         # Validate input parameters and query limits
         validate_search_params(mode=mode, model=model, sources=sources, own_account=self.own)
@@ -288,21 +304,71 @@ class Client(AsyncMixin):
         # Use SSE_ASK_HEADERS so the POST looks like a browser fetch() call
         # (cors mode, empty dest, content-type: application/json) rather than a
         # page navigation, which is what Perplexity's anti-bot layer checks.
-        resp = await self.session.post(
-            ENDPOINT_SSE_ASK, json=json_data, stream=True, headers=SSE_ASK_HEADERS
-        )
+        request_kwargs = {
+            "json": json_data,
+            "stream": True,
+            "headers": SSE_ASK_HEADERS,
+        }
+        if provider_timeout is not None:
+            request_kwargs["timeout"] = provider_timeout
+        resp = await self.session.post(ENDPOINT_SSE_ASK, **request_kwargs)
+
+        async def close_response(resp_obj) -> None:
+            close_result = resp_obj.aclose()
+            if inspect.isawaitable(close_result):
+                await close_result
 
         if resp.status_code == 429:
+            await close_response(resp)
             raise RateLimitError("Perplexity rate limit reached. Please wait before retrying.")
         if resp.status_code in (401, 403):
+            await close_response(resp)
             raise AuthenticationError(f"Authentication failed: status code {resp.status_code}")
         if resp.status_code >= 400:
+            await close_response(resp)
             raise NetworkError(f"Perplexity request failed with status code {resp.status_code}")
 
         chunks: List[Dict[str, Any]] = []
 
+        def observe(content_json: Dict[str, Any]) -> None:
+            if event_callback is not None:
+                event_callback(content_json)
+
         async def stream_response(resp_obj):
-            async for chunk in resp_obj.aiter_lines(delimiter=b"\r\n\r\n"):
+            try:
+                async for chunk in resp_obj.aiter_lines(delimiter=b"\r\n\r\n"):
+                    content = chunk.decode("utf-8") if isinstance(chunk, bytes) else str(chunk)
+
+                    if "data: " in content and not content.startswith("event: end_of_stream"):
+                        try:
+                            data_str = content.split("data: ", 1)[1]
+                            content_json = json.loads(data_str)
+                            content_json = parse_nested_json_response(content_json)
+                            chunks.append(content_json)
+                            observe(content_json)
+                            yield chunks[-1]
+                        except (json.JSONDecodeError, KeyError, IndexError):
+                            continue
+
+                    elif content.startswith("event: end_of_stream"):
+                        if require_complete and (
+                            not chunks or not has_usable_final_response(chunks[-1])
+                        ):
+                            raise IncompleteResponseError(
+                                "Terminal SSE marker did not include a usable final response"
+                            )
+                        return
+
+                if require_complete:
+                    raise IncompleteResponseError("SSE transport ended before terminal delivery")
+            finally:
+                await close_response(resp_obj)
+
+        if stream:
+            return stream_response(resp)
+
+        try:
+            async for chunk in resp.aiter_lines(delimiter=b"\r\n\r\n"):
                 content = chunk.decode("utf-8") if isinstance(chunk, bytes) else str(chunk)
 
                 if "data: " in content and not content.startswith("event: end_of_stream"):
@@ -311,29 +377,21 @@ class Client(AsyncMixin):
                         content_json = json.loads(data_str)
                         content_json = parse_nested_json_response(content_json)
                         chunks.append(content_json)
-                        yield chunks[-1]
+                        observe(content_json)
                     except (json.JSONDecodeError, KeyError, IndexError):
                         continue
 
                 elif content.startswith("event: end_of_stream"):
-                    return
+                    if require_complete and (
+                        not chunks or not has_usable_final_response(chunks[-1])
+                    ):
+                        raise IncompleteResponseError(
+                            "Terminal SSE marker did not include a usable final response"
+                        )
+                    return chunks[-1] if chunks else {}
 
-        if stream:
-            return stream_response(resp)
-
-        async for chunk in resp.aiter_lines(delimiter=b"\r\n\r\n"):
-            content = chunk.decode("utf-8") if isinstance(chunk, bytes) else str(chunk)
-
-            if "data: " in content and not content.startswith("event: end_of_stream"):
-                try:
-                    data_str = content.split("data: ", 1)[1]
-                    content_json = json.loads(data_str)
-                    content_json = parse_nested_json_response(content_json)
-                    chunks.append(content_json)
-                except (json.JSONDecodeError, KeyError, IndexError):
-                    continue
-
-            elif content.startswith("event: end_of_stream"):
-                return chunks[-1] if chunks else {}
-
-        return chunks[-1] if chunks else {}
+            if require_complete:
+                raise IncompleteResponseError("SSE transport ended before terminal delivery")
+            return chunks[-1] if chunks else {}
+        finally:
+            await close_response(resp)
