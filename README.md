@@ -152,8 +152,54 @@ The `PERPLEXITY_COOKIES` environment variable is optional for both transports. I
 |------|------|-------------|
 | `perplexity_ask` | `auto` | General-purpose question answering |
 | `perplexity_research` | `deep research` | In-depth research on a topic |
+| `perplexity_research_start` | `deep research` | Start background research and return a stable local ID |
+| `perplexity_research_list` | local journal | Search this server's research records by query/status |
+| `perplexity_research_get` | local journal | Read delivery status and a persisted completed result |
 | `perplexity_reason` | `reasoning` | Step-by-step reasoning through a problem |
 | `perplexity_search` | `pro` + web sources | Web search |
+
+The three journal tools are available only on an authenticated server. They cover
+research launched through that MCP server, not the provider account's history. A
+start is stored in a private SQLite journal before its bounded background worker is
+scheduled, so an MCP disconnect does not cancel the worker. Pass an
+`idempotency_key` to `perplexity_research_start` when a lost start response may be
+retried; reusing it for another query is rejected.
+
+The original `perplexity_research(query)` Python function remains synchronous and
+answer-only. MCP registers an async adapter for that tool, so cancelling its MCP
+request abandons a nonblocking poller while the server-owned job continues; long
+answer waiters do not occupy the executor used by list and get. If journal setup
+fails, research fails closed and is not silently resubmitted outside the journal.
+
+`delivery_state` describes the local server's work (`queued`, `running`,
+`completed`, `failed`, or `interrupted`). `provider_state` remains `unknown`
+because the web SSE endpoint exposes no verified provider job-status contract.
+Observed provider IDs may be returned as diagnostics only; they are not recovery
+handles. A result becomes `completed` only after this server receives an explicit
+terminal SSE marker and a usable final answer. If its provider connection dies,
+the answer cannot later be fetched from the local journal. A restart marks stale
+active work `interrupted` and never resubmits it automatically.
+
+The journal defaults to
+`$XDG_STATE_HOME/perplexity-ai/research-jobs.sqlite3` (or
+`~/.local/state/perplexity-ai/research-jobs.sqlite3`). Directories created by this
+feature and its database/lock files use owner-only permissions; an existing
+operator-managed parent directory is never chmodded. One server process exclusively
+owns a journal. All authenticated MCP clients of that server share the same journal
+boundary; it is not a per-caller account store. Configure `PERPLEXITY_RESEARCH_DB`,
+`PERPLEXITY_RESEARCH_MAX_QUEUE` (1–100, default 8), and
+`PERPLEXITY_RESEARCH_PROVIDER_TIMEOUT` (30–3600 seconds, default 900) if needed.
+The provider timeout bounds the SSE transport and is independent of any MCP client
+or proxy wait timeout.
+
+The private journal and its four research tools are supported on POSIX systems.
+They fail closed and are not registered on Windows because the Python standard
+library cannot establish and verify the required owner-only ACL for the database
+and lock files there. Authenticated Windows servers still register
+`perplexity_ask`, `perplexity_reason`, and `perplexity_search`.
+
+Jobs launched before this feature was enabled were never recorded and cannot be
+recovered retroactively.
 
 ### Differences from the Official MCP
 

@@ -345,3 +345,11 @@ def parse_nested_json_response(content_json: dict) -> dict:
                         return content_json
 
     return content_json
+
+
+def has_usable_final_response(response: object) -> bool:
+    """Return whether a parsed response contains a non-empty final answer."""
+    if not isinstance(response, dict):
+        return False
+    answer = response.get("answer")
+    return isinstance(answer, str) and bool(answer.strip())

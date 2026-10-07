@@ -1,6 +1,12 @@
+import atexit
+import asyncio
 import json
+import math
 import os
 import sys
+import threading
+from functools import wraps
+from pathlib import Path
 from typing import Any, Optional
 
 try:
@@ -21,6 +27,12 @@ except ImportError:
 
 from perplexity import Client
 from perplexity.logger import setup_logger
+from perplexity.research_jobs import (
+    ACTIVE_STATES,
+    JOURNAL_SUPPORTED,
+    JOURNAL_SUPPORT_MESSAGE,
+    ResearchJobManager,
+)
 
 logger = setup_logger("mcp")
 
@@ -35,6 +47,8 @@ else:
     mcp = _Server("perplexity", host=HOST, port=PORT)
 
 client: Optional[Client] = None
+research_manager: Optional[ResearchJobManager] = None
+_research_manager_lock = threading.Lock()
 
 
 def _get_client() -> Client:
@@ -62,6 +76,86 @@ def _extract_answer(resp: Any) -> str:
             if isinstance(markdown_block, dict):
                 return str(markdown_block.get("answer", ""))
     return str(resp.get("answer", ""))
+
+
+def _bounded_env_number(name: str, default: float, minimum: float, maximum: float) -> float:
+    raw = os.environ.get(name)
+    try:
+        value = float(raw) if raw is not None else default
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a number") from exc
+    if not math.isfinite(value) or value < minimum or value > maximum:
+        raise ValueError(f"{name} must be between {minimum:g} and {maximum:g}")
+    return value
+
+
+def _bounded_env_int(name: str, default: int, minimum: int, maximum: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+    if value < minimum or value > maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}")
+    return value
+
+
+def _get_research_manager(cli: Optional[Client] = None) -> ResearchJobManager:
+    """Return the server-wide authenticated research manager."""
+    global research_manager
+    if research_manager is not None:
+        return research_manager
+    with _research_manager_lock:
+        if research_manager is not None:
+            return research_manager
+        cli = cli or _get_client()
+        if not cli.own:
+            raise PermissionError("research journal tools require an authenticated server")
+
+        state_home = os.environ.get("XDG_STATE_HOME") or str(Path.home() / ".local" / "state")
+        db_path = os.environ.get(
+            "PERPLEXITY_RESEARCH_DB",
+            str(Path(state_home) / "perplexity-ai" / "research-jobs.sqlite3"),
+        )
+        provider_timeout = _bounded_env_number(
+            "PERPLEXITY_RESEARCH_PROVIDER_TIMEOUT", 900.0, 30.0, 3600.0
+        )
+        max_queue = _bounded_env_int("PERPLEXITY_RESEARCH_MAX_QUEUE", 8, 1, 100)
+
+        def run_research(query: str, observe) -> Any:
+            response = cli.search(
+                query,
+                mode="deep research",
+                provider_timeout=provider_timeout,
+                require_complete=True,
+                event_callback=observe,
+            )
+            if isinstance(response, dict) and not response.get("answer"):
+                response = {**response, "answer": _extract_answer(response)}
+            return response
+
+        manager = ResearchJobManager(
+            db_path,
+            run_research,
+            owner_scope="authenticated-mcp-server",
+            max_queue=max_queue,
+        )
+        research_manager = manager
+        return manager
+
+
+def _shutdown_research_manager() -> None:
+    global research_manager
+    with _research_manager_lock:
+        manager = research_manager
+        research_manager = None
+    if manager is not None:
+        manager.close()
+
+
+atexit.register(_shutdown_research_manager)
 
 
 def perplexity_ask(query: str) -> str:
@@ -98,13 +192,89 @@ def perplexity_research(query: str) -> str:
     - Returns plain text only (no citations, images, or structured results).
     - Only one model is available in this mode (cannot select a specific model).
     """
-    cli = _get_client()
     try:
-        resp = cli.search(query, mode="deep research")
-        return _extract_answer(resp)
+        manager = _get_research_manager()
+        job = manager.start(query)
+        finished = manager.wait(job["id"])
+        return _research_result_text(finished)
     except Exception as e:
-        logger.error(f"perplexity_research error: {e}")
-        return f"Error executing research query: {e}"
+        logger.error("perplexity_research failed: %s", e.__class__.__name__)
+        return "Error executing research query: Research could not be completed"
+
+
+def perplexity_research_start(query: str, idempotency_key: Optional[str] = None) -> dict[str, Any]:
+    """Start durable local research and return its stable local ID immediately.
+
+    `idempotency_key` is recommended when retrying a start whose response may have
+    been lost. The same key and query return the same record; a different query
+    conflicts. This records work launched through this MCP server only.
+    """
+    return _get_research_manager().start(query, idempotency_key=idempotency_key)
+
+
+def perplexity_research_list(
+    query: Optional[str] = None,
+    status: Optional[str] = None,
+    cursor: Optional[str] = None,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """Search this server's local research records with bounded pagination."""
+    return _get_research_manager().list(
+        query=query,
+        status=status,
+        cursor=cursor,
+        limit=limit,
+    )
+
+
+def perplexity_research_get(research_id: str) -> dict[str, Any]:
+    """Get local delivery status and the exact result when completed."""
+    return _get_research_manager().get(research_id)
+
+
+def _research_result_text(finished: dict[str, Any]) -> str:
+    if finished["delivery_state"] == "completed":
+        return str(finished["result"])
+    error = finished.get("error") or {}
+    return f"Error executing research query: {error.get('message', 'Research interrupted')}"
+
+
+@wraps(perplexity_research)
+async def _perplexity_research_mcp(query: str) -> str:
+    """Async MCP adapter; cancellation abandons only this nonblocking waiter."""
+    try:
+        manager = await asyncio.to_thread(_get_research_manager)
+        job = await asyncio.to_thread(manager.start, query)
+        while True:
+            finished = await asyncio.to_thread(manager.get, job["id"])
+            if finished["delivery_state"] not in ACTIVE_STATES:
+                return _research_result_text(finished)
+            await asyncio.sleep(0.05)
+    except Exception as exc:
+        logger.error("perplexity_research failed: %s", exc.__class__.__name__)
+        return "Error executing research query: Research could not be completed"
+
+
+@wraps(perplexity_research_start)
+async def _perplexity_research_start_mcp(
+    query: str, idempotency_key: Optional[str] = None
+) -> dict[str, Any]:
+    return await asyncio.to_thread(perplexity_research_start, query, idempotency_key)
+
+
+@wraps(perplexity_research_list)
+async def _perplexity_research_list_mcp(
+    query: Optional[str] = None,
+    status: Optional[str] = None,
+    cursor: Optional[str] = None,
+    limit: int = 20,
+) -> dict[str, Any]:
+    return await asyncio.to_thread(perplexity_research_list, query, status, cursor, limit)
+
+
+@wraps(perplexity_research_get)
+async def _perplexity_research_get_mcp(research_id: str) -> dict[str, Any]:
+    return await asyncio.to_thread(perplexity_research_get, research_id)
 
 
 def perplexity_reason(query: str) -> str:
@@ -149,6 +319,24 @@ def perplexity_search(query: str) -> str:
         return f"Error executing search query: {e}"
 
 
+def _register_tools(
+    server: Any,
+    authenticated: bool,
+    *,
+    journal_supported: bool = JOURNAL_SUPPORTED,
+) -> None:
+    """Register the exact tool set allowed by this server's provider session."""
+    server.tool()(perplexity_ask)
+    if authenticated and journal_supported:
+        server.tool(name="perplexity_research")(_perplexity_research_mcp)
+        server.tool(name="perplexity_research_start")(_perplexity_research_start_mcp)
+        server.tool(name="perplexity_research_list")(_perplexity_research_list_mcp)
+        server.tool(name="perplexity_research_get")(_perplexity_research_get_mcp)
+    if authenticated:
+        server.tool()(perplexity_reason)
+        server.tool()(perplexity_search)
+
+
 def main():
     global client
 
@@ -169,13 +357,16 @@ def main():
 
     client = Client(cookies)
 
-    mcp.tool()(perplexity_ask)
+    _register_tools(mcp, client.own, journal_supported=JOURNAL_SUPPORTED)
 
-    if client.own:
-        logger.info("Authenticated — all 4 tools available.")
-        mcp.tool()(perplexity_research)
-        mcp.tool()(perplexity_reason)
-        mcp.tool()(perplexity_search)
+    if client.own and JOURNAL_SUPPORTED:
+        _get_research_manager(client)
+        logger.info("Authenticated — all search and local research journal tools available.")
+    elif client.own:
+        logger.warning(
+            "Authenticated — search and reasoning tools available; %s.",
+            JOURNAL_SUPPORT_MESSAGE,
+        )
     else:
         logger.warning(
             "No PERPLEXITY_COOKIES set — running anonymously. "
@@ -188,12 +379,15 @@ def main():
     if transport not in ("stdio", "http"):
         sys.exit("ERROR: MCP_TRANSPORT must be 'stdio' or 'http'")
 
-    if transport == "stdio":
-        mcp.run()
-    elif _HTTP_BIND_ON_RUN:
-        mcp.run(transport="streamable-http", host=HOST, port=PORT)
-    else:
-        mcp.run(transport="streamable-http")
+    try:
+        if transport == "stdio":
+            mcp.run()
+        elif _HTTP_BIND_ON_RUN:
+            mcp.run(transport="streamable-http", host=HOST, port=PORT)
+        else:
+            mcp.run(transport="streamable-http")
+    finally:
+        _shutdown_research_manager()
 
 
 if __name__ == "__main__":

@@ -78,6 +78,12 @@ class ParsingError(PerplexityError):
     pass
 
 
+class IncompleteResponseError(PerplexityError):
+    """Raised when strict SSE delivery ends without a usable terminal response."""
+
+    pass
+
+
 class ValidationError(PerplexityError):
     """Raised when input validation fails."""
 
