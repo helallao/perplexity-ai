@@ -1,5 +1,5 @@
-import atexit
 import asyncio
+import atexit
 import json
 import math
 import os
@@ -29,8 +29,8 @@ from perplexity import Client
 from perplexity.logger import setup_logger
 from perplexity.research_jobs import (
     ACTIVE_STATES,
-    JOURNAL_SUPPORTED,
     JOURNAL_SUPPORT_MESSAGE,
+    JOURNAL_SUPPORTED,
     ResearchJobManager,
 )
 
