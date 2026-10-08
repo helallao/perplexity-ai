@@ -7,13 +7,13 @@ handles.
 
 import base64
 import binascii
-from collections import deque
 import hashlib
 import json
 import os
 import re
 import sqlite3
 import threading
+from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -397,8 +397,10 @@ class ResearchJobManager:
             clauses.append("(created_at < ? OR (created_at = ? AND id < ?))")
             params.extend([created_at, created_at, research_id])
 
+        # All values bind through "?" placeholders; only fixed fragment
+        # literals are composed, so B608 does not apply here.
         sql = (
-            "SELECT * FROM research_jobs WHERE "
+            "SELECT * FROM research_jobs WHERE "  # nosec B608 - fragments are code constants
             + " AND ".join(clauses)
             + " ORDER BY created_at DESC, id DESC LIMIT ?"
         )
